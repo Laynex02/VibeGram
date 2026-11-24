@@ -11,3 +11,5 @@ flet-firebase-auth = { path = "./flet_firebase_auth", editable = true }
 
 [tool.flet.flutter.pubspec.dependency_overrides]
 jni = "^1.2.0"
+[tool.flet.dev_packages]
+flet-firebase-auth = "./flet_firebase_auth"
