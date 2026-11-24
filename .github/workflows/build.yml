@@ -30,7 +30,7 @@ jobs:
           channel: stable
 
       - name: Install dependencies
-        run: |
+        run: flet build apk --yes --verbose
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
