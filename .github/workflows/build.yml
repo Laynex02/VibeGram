@@ -48,16 +48,13 @@ jobs:
 
           VERSION=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)
 
-          "$ANDROID_HOME/build-tools/$VERSION/apksigner" verify --print-certs "$APK" 2>&1 | tee fingerprints.txt
+          "$ANDROID_HOME/build-tools/$VERSION/apksigner" verify --print-certs "$APK" | tee fingerprints.txt
 
-          echo "================================"
-          echo "SHA-1:"
-          grep -i "SHA-1" fingerprints.txt
+          echo "========== SHA-1 =========="
+          grep -i "SHA-1" fingerprints.txt || true
 
-          echo "================================"
-          echo "SHA-256:"
-          grep -i "SHA-256" fingerprints.txt
-          echo "================================"
+          echo "========== SHA-256 =========="
+          grep -i "SHA-256" fingerprints.txt || true
 
       - name: Save APK
         uses: actions/upload-artifact@v4
