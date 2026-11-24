@@ -1,1 +1,4 @@
-from flet_firebase_auth.flet_firebase_auth import FletFirebaseAuth
+from flet_firebase_auth.flet_firebase_auth import (
+    FirebaseAuth,
+    FletFirebaseAuth,
+)
