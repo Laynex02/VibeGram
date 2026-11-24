@@ -3,7 +3,7 @@ import 'package:flet/flet.dart';
 import 'package:flutter/widgets.dart';
 
 import 'flet_firebase_auth.dart';
-import 'src/firebase_auth_service.dart';
+import 'firebase_auth_service.dart';
 
 class Extension extends FletExtension {
   @override
