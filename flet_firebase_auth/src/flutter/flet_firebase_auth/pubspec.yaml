@@ -1,18 +1,22 @@
+
 name: flet_firebase_auth
-description: Flet FletFirebaseAuth control
+description: VibeGram Firebase and Google authentication extension
 version: 0.1.0
 publish_to: none
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
-  flutter: ">=1.17.0"
+  flutter: ">=3.27.0"
 
 dependencies:
   flet: ^0.86.5
   flutter:
     sdk: flutter
 
-  # your dependencies here
+  firebase_core: ^5.2.0
+  firebase_auth: ^7.1.0
+  cloud_firestore: ^7.2.0
+  google_sign_in: ^7.2.0
 
 dev_dependencies:
   flutter_test:
