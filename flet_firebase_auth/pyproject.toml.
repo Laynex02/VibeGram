@@ -1,0 +1,13 @@
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "flet-firebase-auth"
+version = "0.1.0"
+description = "Native Google and Firebase authentication for VibeGram"
+dependencies = ["flet>=0.28,<1.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/flet_firebase_auth"]
