@@ -37,11 +37,27 @@ jobs:
             --yes \
             --verbose
 
-      - name: Show APK SHA-1
+      - name: Show APK fingerprints
         run: |
           APK=$(find build/apk -name "*.apk" | head -n 1)
+
+          if [ -z "$APK" ]; then
+            echo "ERROR: APK file not found"
+            exit 1
+          fi
+
           VERSION=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)
-          "$ANDROID_HOME/build-tools/$VERSION/apksigner" verify --print-certs "$APK"
+
+          "$ANDROID_HOME/build-tools/$VERSION/apksigner" verify --print-certs "$APK" 2>&1 | tee fingerprints.txt
+
+          echo "================================"
+          echo "SHA-1:"
+          grep -i "SHA-1" fingerprints.txt
+
+          echo "================================"
+          echo "SHA-256:"
+          grep -i "SHA-256" fingerprints.txt
+          echo "================================"
 
       - name: Save APK
         uses: actions/upload-artifact@v4
