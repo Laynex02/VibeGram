@@ -12,7 +12,20 @@
           "package_name": "com.vibegram.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "280226723716-1trm1m4hl70sfqhnrmc5fct0vema7efd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vibegram.app",
+            "certificate_hash": "2113cab88db1b7ef01411306056b99fe99a37a43"
+          }
+        },
+        {
+          "client_id": "280226723716-4pi2vpbrl1fp8gomnjmklgllo3s5s04m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDKqQHkfw7bcaJMFfKIO5WpJ1q3zFLdUjU"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "280226723716-4pi2vpbrl1fp8gomnjmklgllo3s5s04m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
