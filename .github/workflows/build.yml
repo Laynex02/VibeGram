@@ -1,3 +1,4 @@
+
 name: Build VibeGram APK
 
 on:
@@ -30,7 +31,17 @@ jobs:
           python -m pip install "flet[all]>=0.28,<1.0"
 
       - name: Build Android APK
-        run: flet build apk --yes --verbose
+        run: |
+          flet build apk \
+            --bundle-id com.vibegram.app \
+            --yes \
+            --verbose
+
+      - name: Show APK SHA-1
+        run: |
+          APK=$(find build/apk -name "*.apk" | head -n 1)
+          VERSION=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)
+          "$ANDROID_HOME/build-tools/$VERSION/apksigner" verify --print-certs "$APK"
 
       - name: Save APK
         uses: actions/upload-artifact@v4
