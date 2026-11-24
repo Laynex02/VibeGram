@@ -1,19 +1,13 @@
-import 'package:flet/flet.dart';
-import 'package:flutter/material.dart';
+import flet as ft
 
-class FletFirebaseAuthControl extends StatelessWidget {
-  final Control control;
 
-  const FletFirebaseAuthControl({
-    super.key,
-    required this.control,
-  });
+@ft.control("FirebaseAuth")
+class FirebaseAuth(ft.Service):
+    """Firebase authentication service."""
 
-  @override
-  Widget build(BuildContext context) {
-    String text = control.getString("value", "")!;
-    Widget myControl = Text(text);
 
-    return LayoutControl(control: control, child: myControl);
-  }
-}
+@ft.control("FletFirebaseAuth")
+class FletFirebaseAuth(ft.LayoutControl):
+    """VibeGram Firebase control."""
+
+    value: str = ""
