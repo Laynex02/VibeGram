@@ -1,3 +1,13 @@
+[project]
+name = "vibegram"
+version = "1.0.0"
+dependencies = [
+    "flet>=0.86.5,<1.0",
+    "flet-firebase-auth",
+]
+
+[tool.uv.sources]
+flet-firebase-auth = { path = "./flet_firebase_auth", editable = true }
 
 [tool.flet.flutter.pubspec.dependency_overrides]
 jni = "^1.2.0"
