@@ -1,0 +1,7 @@
+site_name: FletFirebaseAuth
+
+theme:
+  name: "material"
+
+plugins:
+  - mkdocstrings

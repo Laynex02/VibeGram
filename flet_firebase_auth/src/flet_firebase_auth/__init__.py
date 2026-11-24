@@ -1,5 +1,1 @@
-"""VibeGram native Firebase authentication extension."""
-
-from .auth import FirebaseAuth
-
-__all__ = ["FirebaseAuth"]
+from flet_firebase_auth.flet_firebase_auth import FletFirebaseAuth
