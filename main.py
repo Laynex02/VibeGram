@@ -2,548 +2,743 @@
 import flet as ft
 
 
-# VibeGram — neon messenger UI prototype
-# Compatible with modern Flet API (0.86+)
-
-BG = "#080914"
-SURFACE = "#111426"
-SURFACE_LIGHT = "#191E35"
-PURPLE = "#9B5CFF"
-BLUE = "#397BFF"
-CYAN = "#38D9FF"
-WHITE = "#F5F6FF"
-MUTED = "#9299B5"
-GREEN = "#42D9A0"
-
-
-CHATS = [
-    {
-        "name": "Alex",
-        "message": "Давай созвонимся вечером?",
-        "time": "12:40",
-        "unread": 2,
-        "color": "#8B5CF6",
-        "online": True,
-    },
-    {
-        "name": "Maria",
-        "message": "Отправила тебе фото ✨",
-        "time": "11:25",
-        "unread": 0,
-        "color": "#EC4899",
-        "online": True,
-    },
-    {
-        "name": "VibeGram Team",
-        "message": "Добро пожаловать в VibeGram!",
-        "time": "Вчера",
-        "unread": 1,
-        "color": "#397BFF",
-        "online": False,
-    },
-    {
-        "name": "Daniel",
-        "message": "Отлично, договорились 👍",
-        "time": "Вчера",
-        "unread": 0,
-        "color": "#14B8A6",
-        "online": False,
-    },
-]
-
-
 def main(page: ft.Page):
     page.title = "VibeGram"
-    page.bgcolor = BG
     page.theme_mode = ft.ThemeMode.DARK
+    page.bgcolor = "#090914"
     page.padding = 0
     page.spacing = 0
-    page.window.min_width = 320
-    page.window.min_height = 550
 
-    current_chat = None
-    current_tab = 0
-    messages = {}
+    C = {
+        "bg": "#090914",
+        "panel": "#141426",
+        "panel2": "#1B1B32",
+        "purple": "#8B5CF6",
+        "blue": "#3B82F6",
+        "cyan": "#22D3EE",
+        "text": "#F5F3FF",
+        "muted": "#9292AC",
+        "border": "#292944",
+        "danger": "#F87171",
+    }
 
-    def neon_text(value, size=20, color=WHITE, weight=ft.FontWeight.NORMAL):
+    state = {
+        "tab": "Чаты",
+        "theme": "dark",
+        "username": "",
+        "display_name": "",
+        "about": "",
+        "groups": [],
+        "channels": [],
+        "messages": {},
+        "current_chat": None,
+    }
+
+    content = ft.Column(expand=True, spacing=0)
+    nav = ft.Row(
+        alignment=ft.MainAxisAlignment.SPACE_AROUND,
+        spacing=0,
+    )
+
+    def text(value, size=14, color=None, weight=None):
         return ft.Text(
             value,
             size=size,
-            color=color,
+            color=color or C["text"],
             weight=weight,
         )
 
-    def avatar(name, color, size=52, online=False):
-        letter = name[0].upper() if name else "?"
-
-        avatar_content = ft.Container(
-            width=size,
-            height=size,
-            border_radius=size / 2,
-            bgcolor=color,
-            alignment=ft.Alignment.CENTER,
-            content=ft.Text(
-                letter,
-                size=size * 0.42,
-                color=WHITE,
-                weight=ft.FontWeight.BOLD,
-            ),
-        )
-
-        if not online:
-            return avatar_content
-
-        return ft.Stack(
-            width=size,
-            height=size,
-            controls=[
-                avatar_content,
-                ft.Container(
-                    width=13,
-                    height=13,
-                    right=0,
-                    bottom=0,
-                    bgcolor=GREEN,
-                    border_radius=10,
-                    border=ft.Border.all(2, BG),
-                ),
-            ],
-        )
-
-    def header():
+    def panel(control, padding=16):
         return ft.Container(
-            padding=ft.Padding.only(
-                left=20, right=20, top=18, bottom=12
+            content=control,
+            bgcolor=C["panel"],
+            border=ft.border.all(1, C["border"]),
+            border_radius=18,
+            padding=padding,
+        )
+
+    def neon_button(label, on_click, icon=None):
+        return ft.ElevatedButton(
+            text=label,
+            icon=icon,
+            on_click=on_click,
+            bgcolor=C["purple"],
+            color="white",
+            height=48,
+            style=ft.ButtonStyle(
+                shape=ft.RoundedRectangleBorder(radius=14),
             ),
-            content=ft.Row(
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                controls=[
-                    ft.Column(
-                        spacing=2,
-                        controls=[
-                            ft.Row(
-                                spacing=5,
-                                controls=[
-                                    neon_text("Vibe", 27, WHITE, ft.FontWeight.BOLD),
-                                    neon_text("Gram", 27, CYAN, ft.FontWeight.BOLD),
-                                ],
-                            ),
-                            neon_text("Общайся без границ", 12, MUTED),
-                        ],
-                    ),
+        )
+
+    def field(label, hint="", password=False):
+        return ft.TextField(
+            label=label,
+            hint_text=hint,
+            password=password,
+            border_color=C["border"],
+            focused_border_color=C["purple"],
+            color=C["text"],
+            bgcolor=C["panel"],
+            border_radius=12,
+        )
+
+    def notify(message):
+        page.snack_bar = ft.SnackBar(content=text(message))
+        page.snack_bar.open = True
+        page.update()
+
+    def heading(title, subtitle=None):
+        items = [
+            text(title, 25, weight=ft.FontWeight.BOLD),
+        ]
+        if subtitle:
+            items.append(text(subtitle, 13, C["muted"]))
+        return ft.Column(items, spacing=5)
+
+    def section_card(icon, title, subtitle):
+        return panel(
+            ft.Row(
+                [
                     ft.Container(
-                        width=43,
-                        height=43,
-                        border_radius=15,
-                        bgcolor=SURFACE_LIGHT,
-                        alignment=ft.Alignment.CENTER,
-                        content=ft.Icon(
-                            ft.Icons.ADD,
-                            color=CYAN,
-                            size=25,
-                        ),
-                        on_click=lambda e: show_notice(
-                            "Создание нового чата появится позже"
-                        ),
+                        content=ft.Icon(icon, color=C["cyan"], size=25),
+                        bgcolor="#25213F",
+                        padding=13,
+                        border_radius=14,
+                    ),
+                    ft.Column(
+                        [
+                            text(title, 15, weight=ft.FontWeight.BOLD),
+                            text(subtitle, 12, C["muted"]),
+                        ],
+                        spacing=4,
+                        expand=True,
+                    ),
+                    ft.Icon(
+                        ft.Icons.CHEVRON_RIGHT,
+                        color=C["muted"],
                     ),
                 ],
-            ),
-        )
-
-    def show_notice(message):
-        page.open(
-            ft.SnackBar(
-                content=ft.Text(message),
-                bgcolor=SURFACE_LIGHT,
+                spacing=12,
             )
         )
 
-    def chat_tile(chat):
-        def open_chat(e):
-            open_conversation(chat)
+    def show_login():
+        page.clean()
 
-        unread_controls = []
-        if chat["unread"] > 0:
-            unread_controls.append(
+        logo = ft.Container(
+            content=ft.Text(
+                "V",
+                size=52,
+                weight=ft.FontWeight.BOLD,
+                color="white",
+            ),
+            width=100,
+            height=100,
+            alignment=ft.Alignment.CENTER,
+            border_radius=28,
+            gradient=ft.LinearGradient(
+                begin=ft.Alignment.TOP_LEFT,
+                end=ft.Alignment.BOTTOM_RIGHT,
+                colors=[C["purple"], C["blue"], C["cyan"]],
+            ),
+        )
+
+        email = field("Email", "Твой Google-аккаунт")
+
+        page.add(
+            ft.Container(
+                expand=True,
+                bgcolor=C["bg"],
+                alignment=ft.Alignment.CENTER,
+                padding=25,
+                content=ft.Column(
+                    [
+                        logo,
+                        text("VibeGram", 32, weight=ft.FontWeight.BOLD),
+                        text(
+                            "Общайся. Создавай. Будь собой.",
+                            14,
+                            C["muted"],
+                        ),
+                        ft.Container(height=25),
+                        panel(
+                            ft.Column(
+                                [
+                                    text("Добро пожаловать!", 21,
+                                         weight=ft.FontWeight.BOLD),
+                                    text(
+                                        "Войди в свой аккаунт VibeGram",
+                                        13,
+                                        C["muted"],
+                                    ),
+                                    email,
+                                    neon_button(
+                                        "Продолжить через Google",
+                                        lambda e: notify(
+                                            "Google-вход подключим через Firebase"
+                                        ),
+                                        ft.Icons.LOGIN,
+                                    ),
+                                    text(
+                                        "Авторизация пока настраивается. "
+                                        "Аккаунты не создаются до подключения Firebase.",
+                                        11,
+                                        C["muted"],
+                                    ),
+                                ],
+                                spacing=15,
+                            )
+                        ),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=12,
+                    scroll=ft.ScrollMode.AUTO,
+                ),
+            )
+        )
+
+    def set_tab(tab):
+        state["tab"] = tab
+        render()
+
+    def create_nav():
+        nav.controls.clear()
+
+        items = [
+            ("Чаты", ft.Icons.CHAT_BUBBLE_OUTLINE),
+            ("Контакты", ft.Icons.PEOPLE_OUTLINE),
+            ("Каналы", ft.Icons.CAMPAIGN_OUTLINED),
+            ("Группы", ft.Icons.GROUP_OUTLINED),
+            ("Профиль", ft.Icons.PERSON_OUTLINE),
+        ]
+
+        for label, icon in items:
+            active = state["tab"] == label
+            nav.controls.append(
                 ft.Container(
-                    padding=ft.Padding.symmetric(horizontal=8, vertical=3),
-                    border_radius=20,
-                    bgcolor=PURPLE,
-                    content=ft.Text(
-                        str(chat["unread"]),
-                        size=11,
-                        color=WHITE,
-                        weight=ft.FontWeight.BOLD,
+                    content=ft.Column(
+                        [
+                            ft.Icon(
+                                icon,
+                                size=22,
+                                color=C["cyan"] if active else C["muted"],
+                            ),
+                            text(
+                                label,
+                                10,
+                                C["cyan"] if active else C["muted"],
+                            ),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=3,
                     ),
+                    padding=ft.Padding.symmetric(vertical=10, horizontal=5),
+                    on_click=lambda e, t=label: set_tab(t),
+                    expand=True,
+                    alignment=ft.Alignment.CENTER,
                 )
             )
 
+    def empty_state(icon, title, subtitle):
         return ft.Container(
-            padding=12,
-            border_radius=18,
-            bgcolor=SURFACE,
-            on_click=open_chat,
-            content=ft.Row(
-                spacing=12,
-                controls=[
-                    avatar(
-                        chat["name"],
-                        chat["color"],
-                        52,
-                        chat["online"],
-                    ),
-                    ft.Column(
-                        expand=True,
-                        spacing=5,
-                        controls=[
-                            neon_text(
-                                chat["name"],
-                                15,
-                                WHITE,
-                                ft.FontWeight.BOLD,
-                            ),
-                            ft.Text(
-                                chat["message"],
-                                size=12,
-                                color=MUTED,
-                                max_lines=1,
-                                overflow=ft.TextOverflow.ELLIPSIS,
-                            ),
-                        ],
-                    ),
-                    ft.Column(
-                        horizontal_alignment=ft.CrossAxisAlignment.END,
-                        spacing=9,
-                        controls=[
-                            ft.Text(
-                                chat["time"],
-                                size=10,
-                                color=MUTED,
-                            ),
-                            *unread_controls,
-                        ],
-                    ),
+            expand=True,
+            alignment=ft.Alignment.CENTER,
+            padding=25,
+            content=ft.Column(
+                [
+                    ft.Icon(icon, size=58, color=C["purple"]),
+                    text(title, 19, weight=ft.FontWeight.BOLD),
+                    text(subtitle, 13, C["muted"]),
                 ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=12,
             ),
         )
 
-    def home_content():
-        search_field = ft.TextField(
-            hint_text="Поиск чатов...",
-            prefix_icon=ft.Icons.SEARCH,
-            filled=True,
-            bgcolor=SURFACE,
-            border=ft.InputBorder.NONE,
-            border_radius=16,
-            color=WHITE,
-            hint_style=ft.TextStyle(color=MUTED),
-            on_change=lambda e: filter_chats(e.control.value),
-        )
-
-        chat_list = ft.ListView(
+    def chats_screen():
+        return ft.Column(
+            [
+                heading("Чаты", "Твои личные переписки"),
+                ft.Container(height=12),
+                field("Поиск", "Найти переписку или пользователя"),
+                ft.Container(height=10),
+                empty_state(
+                    ft.Icons.CHAT_BUBBLE_OUTLINE,
+                    "Пока нет чатов",
+                    "Когда появятся контакты, здесь будут твои переписки.",
+                ),
+            ],
             expand=True,
-            spacing=10,
-            padding=ft.Padding.only(left=16, right=16, bottom=12),
+            spacing=8,
         )
 
-        def fill_chats(items):
-            chat_list.controls.clear()
-            for item in items:
-                chat_list.controls.append(chat_tile(item))
-            page.update()
+    def contacts_screen():
+        return ft.Column(
+            [
+                heading("Контакты", "Люди из твоей телефонной книги"),
+                ft.Container(height=12),
+                section_card(
+                    ft.Icons.PERSON_SEARCH,
+                    "Найти пользователей",
+                    "Поиск по username VibeGram",
+                ),
+                ft.Container(height=10),
+                neon_button(
+                    "Разрешить доступ к контактам",
+                    lambda e: notify(
+                        "Доступ к телефонной книге подключим через Android"
+                    ),
+                    ft.Icons.CONTACTS,
+                ),
+                ft.Container(height=12),
+                empty_state(
+                    ft.Icons.PEOPLE_OUTLINE,
+                    "Контактов пока нет",
+                    "Сначала подключим аккаунты и безопасный поиск контактов.",
+                ),
+            ],
+            expand=True,
+            spacing=8,
+        )
 
-        def filter_chats(value):
-            query = value.lower().strip()
-            filtered = [
-                chat for chat in CHATS
-                if query in chat["name"].lower()
-                or query in chat["message"].lower()
-            ]
-            fill_chats(filtered)
+    def create_group(e):
+        name = field("Название группы", "Например, Друзья")
+        description = field("Описание", "О чём эта группа?")
 
-        fill_chats(CHATS)
+        def save(ev):
+            value = name.value.strip()
+            if not value:
+                notify("Введи название группы")
+                return
+            state["groups"].append({
+                "name": value,
+                "description": description.value.strip(),
+            })
+            page.pop_dialog()
+            render()
+
+        page.show_dialog(
+            ft.AlertDialog(
+                modal=True,
+                title=text("Новая группа"),
+                content=ft.Column(
+                    [name, description],
+                    tight=True,
+                    spacing=12,
+                ),
+                actions=[
+                    ft.TextButton(
+                        "Отмена",
+                        on_click=lambda ev: page.pop_dialog(),
+                    ),
+                    ft.TextButton("Создать", on_click=save),
+                ],
+            )
+        )
+
+    def groups_screen():
+        items = [
+            heading("Группы", "Общайся сразу с несколькими людьми"),
+            ft.Container(height=10),
+            neon_button(
+                "Создать группу",
+                create_group,
+                ft.Icons.GROUP_ADD,
+            ),
+            ft.Container(height=10),
+        ]
+
+        if not state["groups"]:
+            items.append(
+                empty_state(
+                    ft.Icons.GROUP_OUTLINED,
+                    "Групп пока нет",
+                    "Создай первую группу VibeGram.",
+                )
+            )
+        else:
+            for group in state["groups"]:
+                items.append(
+                    panel(
+                        ft.Column(
+                            [
+                                text(
+                                    group["name"],
+                                    16,
+                                    weight=ft.FontWeight.BOLD,
+                                ),
+                                text(
+                                    group["description"] or "Группа VibeGram",
+                                    12,
+                                    C["muted"],
+                                ),
+                                text(
+                                    "Участники и сообщения подключим к Firebase",
+                                    11,
+                                    C["muted"],
+                                ),
+                            ],
+                            spacing=5,
+                        )
+                    )
+                )
+
+        return ft.Column(items, expand=True, spacing=8)
+
+    def create_channel(e):
+        name = field("Название канала", "Например, VibeGram News")
+        description = field("Описание", "О чём канал?")
+        visibility = ft.Dropdown(
+            label="Тип канала",
+            value="Публичный",
+            options=[
+                ft.dropdown.Option("Публичный"),
+                ft.dropdown.Option("Приватный"),
+            ],
+            border_color=C["border"],
+        )
+
+        def save(ev):
+            value = name.value.strip()
+            if not value:
+                notify("Введи название канала")
+                return
+            state["channels"].append({
+                "name": value,
+                "description": description.value.strip(),
+                "visibility": visibility.value,
+            })
+            page.pop_dialog()
+            render()
+
+        page.show_dialog(
+            ft.AlertDialog(
+                modal=True,
+                title=text("Создать канал"),
+                content=ft.Column(
+                    [name, description, visibility],
+                    tight=True,
+                    spacing=12,
+                ),
+                actions=[
+                    ft.TextButton(
+                        "Отмена",
+                        on_click=lambda ev: page.pop_dialog(),
+                    ),
+                    ft.TextButton("Создать", on_click=save),
+                ],
+            )
+        )
+
+    def channels_screen():
+        items = [
+            heading("Каналы", "Публикации и новости"),
+            ft.Container(height=10),
+            neon_button(
+                "Создать канал",
+                create_channel,
+                ft.Icons.ADD,
+            ),
+            ft.Container(height=10),
+        ]
+
+        if not state["channels"]:
+            items.append(
+                empty_state(
+                    ft.Icons.CAMPAIGN_OUTLINED,
+                    "Каналов пока нет",
+                    "Создай канал для своих публикаций.",
+                )
+            )
+        else:
+            for channel in state["channels"]:
+                items.append(
+                    panel(
+                        ft.Column(
+                            [
+                                text(
+                                    channel["name"],
+                                    16,
+                                    weight=ft.FontWeight.BOLD,
+                                ),
+                                text(
+                                    channel["description"] or "Канал VibeGram",
+                                    12,
+                                    C["muted"],
+                                ),
+                                text(
+                                    channel["visibility"],
+                                    11,
+                                    C["cyan"],
+                                ),
+                                text(
+                                    "Публикации и подписчики подключим к Firebase",
+                                    11,
+                                    C["muted"],
+                                ),
+                            ],
+                            spacing=5,
+                        )
+                    )
+                )
+
+        return ft.Column(items, expand=True, spacing=8)
+
+    def profile_screen():
+        name = field("Имя", state["display_name"])
+        username = field("Username", state["username"])
+        about = field("О себе", state["about"])
+
+        def save_profile(e):
+            state["display_name"] = name.value.strip()
+            state["username"] = username.value.strip().lstrip("@")
+            state["about"] = about.value.strip()
+            notify("Изменения сохранены на этом устройстве")
+            render()
 
         return ft.Column(
-            expand=True,
-            spacing=12,
-            controls=[
-                header(),
-                ft.Container(
-                    padding=ft.Padding.symmetric(horizontal=16),
-                    content=search_field,
+            [
+                heading("Профиль", "Твоя страница VibeGram"),
+                ft.Container(height=12),
+                panel(
+                    ft.Column(
+                        [
+                            ft.Container(
+                                content=ft.Icon(
+                                    ft.Icons.PERSON,
+                                    size=45,
+                                    color=C["cyan"],
+                                ),
+                                width=90,
+                                height=90,
+                                bgcolor="#25213F",
+                                border_radius=45,
+                                alignment=ft.Alignment.CENTER,
+                            ),
+                            text(
+                                state["display_name"] or "Твоё имя",
+                                20,
+                                weight=ft.FontWeight.BOLD,
+                            ),
+                            text(
+                                "@" + state["username"]
+                                if state["username"]
+                                else "@username",
+                                13,
+                                C["muted"],
+                            ),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=8,
+                    )
                 ),
-                ft.Container(
-                    padding=ft.Padding.symmetric(horizontal=20),
-                    content=neon_text("Сообщения", 19, WHITE, ft.FontWeight.BOLD),
+                name,
+                username,
+                about,
+                neon_button("Сохранить профиль", save_profile),
+                section_card(
+                    ft.Icons.SHIELD_OUTLINED,
+                    "Приватность",
+                    "Настройки безопасности и видимости",
                 ),
-                chat_list,
+                section_card(
+                    ft.Icons.NOTIFICATIONS_OUTLINED,
+                    "Уведомления",
+                    "Настройка уведомлений",
+                ),
+                section_card(
+                    ft.Icons.INFO_OUTLINE,
+                    "О приложении",
+                    "VibeGram — общайся без границ",
+                ),
             ],
+            spacing=10,
+            scroll=ft.ScrollMode.AUTO,
         )
 
-    def open_conversation(chat):
-        nonlocal current_chat
-        current_chat = chat
+    def settings_screen():
+        def change_theme(e):
+            if state["theme"] == "dark":
+                state["theme"] = "light"
+                page.theme_mode = ft.ThemeMode.LIGHT
+                page.bgcolor = "#F4F2FF"
+                C["bg"] = "#F4F2FF"
+                C["panel"] = "#FFFFFF"
+                C["text"] = "#17152A"
+                C["muted"] = "#77738D"
+            else:
+                state["theme"] = "dark"
+                page.theme_mode = ft.ThemeMode.DARK
+                page.bgcolor = "#090914"
+                C["bg"] = "#090914"
+                C["panel"] = "#141426"
+                C["text"] = "#F5F3FF"
+                C["muted"] = "#9292AC"
+            render()
 
-        if chat["name"] not in messages:
-            messages[chat["name"]] = [
-                ("Привет! Как дела?", False),
-                ("Всё отлично! А у тебя?", True),
-            ]
-
-        render_conversation()
-
-    def render_conversation():
-        page.clean()
-
-        chat = current_chat
-        if chat is None:
-            render_home()
-            return
-
-        message_list = ft.ListView(
-            expand=True,
-            spacing=12,
-            padding=16,
-            auto_scroll=True,
-        )
-
-        def add_message(text, mine):
-            bubble_color = "#29204A" if mine else SURFACE_LIGHT
-
-            message_list.controls.append(
-                ft.Row(
-                    alignment=(
-                        ft.MainAxisAlignment.END
-                        if mine
-                        else ft.MainAxisAlignment.START
-                    ),
-                    controls=[
-                        ft.Container(
-                            padding=12,
-                            border_radius=16,
-                            bgcolor=bubble_color,
-                            border=ft.Border.all(
-                                1,
-                                "#7548C9" if mine else "#252B46",
+        return ft.Column(
+            [
+                heading("Оформление", "Настрой VibeGram под себя"),
+                ft.Container(height=12),
+                panel(
+                    ft.Column(
+                        [
+                            text("Тема приложения", 16,
+                                 weight=ft.FontWeight.BOLD),
+                            text(
+                                "Выбирай тёмный или светлый режим",
+                                12,
+                                C["muted"],
                             ),
-                            width=None,
-                            content=ft.Text(
-                                text,
-                                color=WHITE,
-                                size=14,
+                            neon_button(
+                                "Сменить тему",
+                                change_theme,
+                                ft.Icons.PALETTE_OUTLINED,
                             ),
-                        ),
-                    ],
-                )
-            )
-
-        for text, mine in messages[chat["name"]]:
-            add_message(text, mine)
-
-        message_input = ft.TextField(
-            hint_text="Написать сообщение...",
-            expand=True,
-            filled=True,
-            bgcolor=SURFACE_LIGHT,
-            border=ft.InputBorder.NONE,
-            border_radius=18,
-            color=WHITE,
-            hint_style=ft.TextStyle(color=MUTED),
-            text_size=14,
-            on_submit=lambda e: send_message(),
-        )
-
-        def send_message():
-            value = message_input.value.strip()
-            if not value:
-                return
-
-            messages[chat["name"]].append((value, True))
-            message_input.value = ""
-            render_conversation()
-
-        page.add(
-            ft.SafeArea(
-                expand=True,
-                content=ft.Column(
-                    expand=True,
-                    spacing=0,
-                    controls=[
-                        ft.Container(
-                            padding=12,
-                            bgcolor=SURFACE,
-                            content=ft.Row(
-                                spacing=12,
-                                controls=[
-                                    ft.IconButton(
-                                        icon=ft.Icons.ARROW_BACK,
-                                        icon_color=CYAN,
-                                        on_click=lambda e: render_home(),
-                                    ),
-                                    avatar(
-                                        chat["name"],
-                                        chat["color"],
-                                        42,
-                                        chat["online"],
-                                    ),
-                                    ft.Column(
-                                        expand=True,
-                                        spacing=2,
-                                        controls=[
-                                            neon_text(
-                                                chat["name"],
-                                                15,
-                                                WHITE,
-                                                ft.FontWeight.BOLD,
-                                            ),
-                                            neon_text(
-                                                "В сети" if chat["online"] else "Не в сети",
-                                                11,
-                                                GREEN if chat["online"] else MUTED,
-                                            ),
-                                        ],
-                                    ),
-                                    ft.IconButton(
-                                        icon=ft.Icons.CALL_OUTLINED,
-                                        icon_color=CYAN,
-                                        on_click=lambda e: show_notice(
-                                            "Звонки появятся позже"
-                                        ),
-                                    ),
-                                    ft.IconButton(
-                                        icon=ft.Icons.MORE_VERT,
-                                        icon_color=WHITE,
-                                        on_click=lambda e: show_notice(
-                                            "Дополнительные функции появятся позже"
-                                        ),
-                                    ),
-                                ],
+                        ],
+                        spacing=10,
+                    )
+                ),
+                panel(
+                    ft.Column(
+                        [
+                            text("Цветовая тема", 16,
+                                 weight=ft.FontWeight.BOLD),
+                            text(
+                                "Сейчас используется неоновый фиолетово-синий стиль.",
+                                12,
+                                C["muted"],
                             ),
-                        ),
-                        ft.Container(
-                            expand=True,
-                            content=message_list,
-                        ),
-                        ft.Container(
-                            padding=12,
-                            bgcolor=SURFACE,
-                            content=ft.Row(
-                                spacing=8,
-                                controls=[
-                                    message_input,
+                            ft.Row(
+                                [
                                     ft.Container(
-                                        width=46,
-                                        height=46,
-                                        border_radius=16,
-                                        gradient=ft.LinearGradient(
-                                            begin=ft.Alignment.CENTER_LEFT,
-                                            end=ft.Alignment.CENTER_RIGHT,
-                                            colors=[PURPLE, BLUE],
-                                        ),
-                                        alignment=ft.Alignment.CENTER,
-                                        content=ft.Icon(
-                                            ft.Icons.SEND,
-                                            color=WHITE,
-                                        ),
-                                        on_click=lambda e: send_message(),
+                                        width=35,
+                                        height=35,
+                                        bgcolor="#8B5CF6",
+                                        border_radius=10,
+                                    ),
+                                    ft.Container(
+                                        width=35,
+                                        height=35,
+                                        bgcolor="#3B82F6",
+                                        border_radius=10,
+                                    ),
+                                    ft.Container(
+                                        width=35,
+                                        height=35,
+                                        bgcolor="#22D3EE",
+                                        border_radius=10,
                                     ),
                                 ],
+                                spacing=10,
                             ),
-                        ),
-                    ],
+                        ],
+                        spacing=10,
+                    )
                 ),
-            )
-        )
-        page.update()
-
-    def render_home():
-        nonlocal current_chat
-        current_chat = None
-        page.clean()
-
-        def change_tab(e):
-            nonlocal current_tab
-            current_tab = e.control.selected_index
-
-            if current_tab == 0:
-                render_home()
-            elif current_tab == 1:
-                show_placeholder("Контакты")
-            elif current_tab == 2:
-                show_placeholder("Профиль")
-
-        page.navigation_bar = ft.NavigationBar(
-            selected_index=current_tab,
-            bgcolor=SURFACE,
-            indicator_color="#33245D",
-            destinations=[
-                ft.NavigationBarDestination(
-                    icon=ft.Icons.CHAT_BUBBLE_OUTLINE,
-                    selected_icon=ft.Icons.CHAT_BUBBLE,
-                    label="Чаты",
-                ),
-                ft.NavigationBarDestination(
-                    icon=ft.Icons.PEOPLE_OUTLINE,
-                    selected_icon=ft.Icons.PEOPLE,
-                    label="Контакты",
-                ),
-                ft.NavigationBarDestination(
-                    icon=ft.Icons.PERSON_OUTLINE,
-                    selected_icon=ft.Icons.PERSON,
-                    label="Профиль",
+                text(
+                    "Настраиваемые палитры и фоны чатов добавим следующим этапом.",
+                    12,
+                    C["muted"],
                 ),
             ],
-            on_change=change_tab,
+            spacing=12,
         )
 
-        page.add(
-            ft.SafeArea(
-                expand=True,
-                content=home_content(),
-            )
-        )
-        page.update()
-
-    def show_placeholder(title):
+    def render():
         page.clean()
-        page.add(
-            ft.SafeArea(
-                expand=True,
-                content=ft.Column(
-                    expand=True,
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    controls=[
-                        ft.Icon(
-                            ft.Icons.AUTO_AWESOME,
-                            size=55,
-                            color=PURPLE,
-                        ),
-                        neon_text(title, 24, WHITE, ft.FontWeight.BOLD),
-                        neon_text(
-                            "Этот раздел скоро появится",
-                            14,
-                            MUTED,
-                        ),
-                        ft.Button(
-                            content="Вернуться к чатам",
-                            on_click=lambda e: (
-                                set_home_tab()
+        create_nav()
+
+        if state["tab"] == "Чаты":
+            screen = chats_screen()
+        elif state["tab"] == "Контакты":
+            screen = contacts_screen()
+        elif state["tab"] == "Группы":
+            screen = groups_screen()
+        elif state["tab"] == "Каналы":
+            screen = channels_screen()
+        elif state["tab"] == "Профиль":
+            screen = profile_screen()
+        else:
+            screen = settings_screen()
+
+        header = ft.Container(
+            padding=ft.Padding.symmetric(horizontal=18, vertical=14),
+            content=ft.Row(
+                [
+                    ft.Row(
+                        [
+                            ft.Container(
+                                content=text(
+                                    "V",
+                                    20,
+                                    "white",
+                                    ft.FontWeight.BOLD,
+                                ),
+                                width=38,
+                                height=38,
+                                alignment=ft.Alignment.CENTER,
+                                border_radius=12,
+                                gradient=ft.LinearGradient(
+                                    colors=[C["purple"], C["blue"]],
+                                ),
                             ),
-                        ),
-                    ],
-                ),
+                            text(
+                                "VibeGram",
+                                19,
+                                weight=ft.FontWeight.BOLD,
+                            ),
+                        ],
+                        spacing=9,
+                    ),
+                    ft.Row(
+                        [
+                            ft.IconButton(
+                                ft.Icons.PALETTE_OUTLINED,
+                                icon_color=C["cyan"],
+                                tooltip="Оформление",
+                                on_click=lambda e: set_tab("Настройки"),
+                            ),
+                            ft.IconButton(
+                                ft.Icons.SETTINGS_OUTLINED,
+                                icon_color=C["muted"],
+                                tooltip="Настройки",
+                                on_click=lambda e: set_tab("Настройки"),
+                            ),
+                        ],
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            ),
+        )
+
+        body = ft.Container(
+            content=screen,
+            padding=18,
+            expand=True,
+        )
+
+        bottom = ft.Container(
+            content=nav,
+            bgcolor=C["panel"],
+            border=ft.border.only(top=ft.BorderSide(1, C["border"])),
+            padding=ft.Padding.symmetric(horizontal=5),
+        )
+
+        page.add(
+            ft.Column(
+                [
+                    header,
+                    body,
+                    bottom,
+                ],
+                expand=True,
+                spacing=0,
             )
         )
         page.update()
 
-    def set_home_tab():
-        nonlocal current_tab
-        current_tab = 0
-        render_home()
-
-    render_home()
+    render()
 
 
-if __name__ == "__main__":
-    ft.run(main)
+ft.app(target=main)
