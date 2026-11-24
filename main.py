@@ -1,8 +1,9 @@
-
+from flet_firebase_auth import FirebaseAuth
 import flet as ft
 
-
 def main(page: ft.Page):
+    firebase_auth = FirebaseAuth()
+    page.services.append(firebase_auth)
     page.title = "VibeGram"
     page.theme_mode = ft.ThemeMode.DARK
     page.bgcolor = "#090914"
