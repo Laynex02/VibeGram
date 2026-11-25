@@ -7,10 +7,10 @@ class FirebaseAuth(ft.Service):
     """VibeGram Firebase authentication service."""
 
     async def sign_in(self):
-        return await self.invoke_method("sign_in")
+        return await self._invoke_method("sign_in", {})
 
     async def sign_out(self):
-        return await self.invoke_method("sign_out")
+        return await self._invoke_method("sign_out", {})
 
 
 @ft.control("FletFirebaseAuth")
