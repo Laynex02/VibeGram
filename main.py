@@ -1,9 +1,12 @@
-from flet_firebase_auth import FirebaseAuth
+
 import flet as ft
+from flet_firebase_auth import FirebaseAuth
+
 
 def main(page: ft.Page):
     firebase_auth = FirebaseAuth()
     page.services.append(firebase_auth)
+
     page.title = "VibeGram"
     page.theme_mode = ft.ThemeMode.DARK
     page.bgcolor = "#090914"
@@ -35,7 +38,6 @@ def main(page: ft.Page):
         "current_chat": None,
     }
 
-    content = ft.Column(expand=True, spacing=0)
     nav = ft.Row(
         alignment=ft.MainAxisAlignment.SPACE_AROUND,
         spacing=0,
@@ -58,9 +60,10 @@ def main(page: ft.Page):
             padding=padding,
         )
 
+    # ИСПРАВЛЕНО: Button больше не получает аргумент text
     def neon_button(label, on_click, icon=None):
         return ft.ElevatedButton(
-            text=label,
+            content=ft.Text(label),
             icon=icon,
             on_click=on_click,
             bgcolor=C["purple"],
@@ -84,7 +87,9 @@ def main(page: ft.Page):
         )
 
     def notify(message):
-        page.snack_bar = ft.SnackBar(content=text(message))
+        page.snack_bar = ft.SnackBar(
+            content=text(message)
+        )
         page.snack_bar.open = True
         page.update()
 
@@ -92,8 +97,10 @@ def main(page: ft.Page):
         items = [
             text(title, 25, weight=ft.FontWeight.BOLD),
         ]
+
         if subtitle:
             items.append(text(subtitle, 13, C["muted"]))
+
         return ft.Column(items, spacing=5)
 
     def section_card(icon, title, subtitle):
@@ -101,15 +108,27 @@ def main(page: ft.Page):
             ft.Row(
                 [
                     ft.Container(
-                        content=ft.Icon(icon, color=C["cyan"], size=25),
+                        content=ft.Icon(
+                            icon,
+                            color=C["cyan"],
+                            size=25,
+                        ),
                         bgcolor="#25213F",
                         padding=13,
                         border_radius=14,
                     ),
                     ft.Column(
                         [
-                            text(title, 15, weight=ft.FontWeight.BOLD),
-                            text(subtitle, 12, C["muted"]),
+                            text(
+                                title,
+                                15,
+                                weight=ft.FontWeight.BOLD,
+                            ),
+                            text(
+                                subtitle,
+                                12,
+                                C["muted"],
+                            ),
                         ],
                         spacing=4,
                         expand=True,
@@ -140,7 +159,11 @@ def main(page: ft.Page):
             gradient=ft.LinearGradient(
                 begin=ft.Alignment.TOP_LEFT,
                 end=ft.Alignment.BOTTOM_RIGHT,
-                colors=[C["purple"], C["blue"], C["cyan"]],
+                colors=[
+                    C["purple"],
+                    C["blue"],
+                    C["cyan"],
+                ],
             ),
         )
 
@@ -155,7 +178,11 @@ def main(page: ft.Page):
                 content=ft.Column(
                     [
                         logo,
-                        text("VibeGram", 32, weight=ft.FontWeight.BOLD),
+                        text(
+                            "VibeGram",
+                            32,
+                            weight=ft.FontWeight.BOLD,
+                        ),
                         text(
                             "Общайся. Создавай. Будь собой.",
                             14,
@@ -165,8 +192,11 @@ def main(page: ft.Page):
                         panel(
                             ft.Column(
                                 [
-                                    text("Добро пожаловать!", 21,
-                                         weight=ft.FontWeight.BOLD),
+                                    text(
+                                        "Добро пожаловать!",
+                                        21,
+                                        weight=ft.FontWeight.BOLD,
+                                    ),
                                     text(
                                         "Войди в свой аккаунт VibeGram",
                                         13,
@@ -215,6 +245,7 @@ def main(page: ft.Page):
 
         for label, icon in items:
             active = state["tab"] == label
+
             nav.controls.append(
                 ft.Container(
                     content=ft.Column(
@@ -222,7 +253,11 @@ def main(page: ft.Page):
                             ft.Icon(
                                 icon,
                                 size=22,
-                                color=C["cyan"] if active else C["muted"],
+                                color=(
+                                    C["cyan"]
+                                    if active
+                                    else C["muted"]
+                                ),
                             ),
                             text(
                                 label,
@@ -233,7 +268,10 @@ def main(page: ft.Page):
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                         spacing=3,
                     ),
-                    padding=ft.Padding.symmetric(vertical=10, horizontal=5),
+                    padding=ft.Padding.symmetric(
+                        vertical=10,
+                        horizontal=5,
+                    ),
                     on_click=lambda e, t=label: set_tab(t),
                     expand=True,
                     alignment=ft.Alignment.CENTER,
@@ -247,9 +285,21 @@ def main(page: ft.Page):
             padding=25,
             content=ft.Column(
                 [
-                    ft.Icon(icon, size=58, color=C["purple"]),
-                    text(title, 19, weight=ft.FontWeight.BOLD),
-                    text(subtitle, 13, C["muted"]),
+                    ft.Icon(
+                        icon,
+                        size=58,
+                        color=C["purple"],
+                    ),
+                    text(
+                        title,
+                        19,
+                        weight=ft.FontWeight.BOLD,
+                    ),
+                    text(
+                        subtitle,
+                        13,
+                        C["muted"],
+                    ),
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=12,
@@ -259,9 +309,15 @@ def main(page: ft.Page):
     def chats_screen():
         return ft.Column(
             [
-                heading("Чаты", "Твои личные переписки"),
+                heading(
+                    "Чаты",
+                    "Твои личные переписки",
+                ),
                 ft.Container(height=12),
-                field("Поиск", "Найти переписку или пользователя"),
+                field(
+                    "Поиск",
+                    "Найти переписку или пользователя",
+                ),
                 ft.Container(height=10),
                 empty_state(
                     ft.Icons.CHAT_BUBBLE_OUTLINE,
@@ -276,7 +332,10 @@ def main(page: ft.Page):
     def contacts_screen():
         return ft.Column(
             [
-                heading("Контакты", "Люди из твоей телефонной книги"),
+                heading(
+                    "Контакты",
+                    "Люди из твоей телефонной книги",
+                ),
                 ft.Container(height=12),
                 section_card(
                     ft.Icons.PERSON_SEARCH,
@@ -303,18 +362,28 @@ def main(page: ft.Page):
         )
 
     def create_group(e):
-        name = field("Название группы", "Например, Друзья")
-        description = field("Описание", "О чём эта группа?")
+        name = field(
+            "Название группы",
+            "Например, Друзья",
+        )
+
+        description = field(
+            "Описание",
+            "О чём эта группа?",
+        )
 
         def save(ev):
-            value = name.value.strip()
+            value = (name.value or "").strip()
+
             if not value:
                 notify("Введи название группы")
                 return
+
             state["groups"].append({
                 "name": value,
-                "description": description.value.strip(),
+                "description": (description.value or "").strip(),
             })
+
             page.pop_dialog()
             render()
 
@@ -332,14 +401,20 @@ def main(page: ft.Page):
                         "Отмена",
                         on_click=lambda ev: page.pop_dialog(),
                     ),
-                    ft.TextButton("Создать", on_click=save),
+                    ft.TextButton(
+                        "Создать",
+                        on_click=save,
+                    ),
                 ],
             )
         )
 
     def groups_screen():
         items = [
-            heading("Группы", "Общайся сразу с несколькими людьми"),
+            heading(
+                "Группы",
+                "Общайся сразу с несколькими людьми",
+            ),
             ft.Container(height=10),
             neon_button(
                 "Создать группу",
@@ -384,11 +459,24 @@ def main(page: ft.Page):
                     )
                 )
 
-        return ft.Column(items, expand=True, spacing=8)
+        return ft.Column(
+            items,
+            expand=True,
+            spacing=8,
+            scroll=ft.ScrollMode.AUTO,
+        )
 
     def create_channel(e):
-        name = field("Название канала", "Например, VibeGram News")
-        description = field("Описание", "О чём канал?")
+        name = field(
+            "Название канала",
+            "Например, VibeGram News",
+        )
+
+        description = field(
+            "Описание",
+            "О чём канал?",
+        )
+
         visibility = ft.Dropdown(
             label="Тип канала",
             value="Публичный",
@@ -400,15 +488,18 @@ def main(page: ft.Page):
         )
 
         def save(ev):
-            value = name.value.strip()
+            value = (name.value or "").strip()
+
             if not value:
                 notify("Введи название канала")
                 return
+
             state["channels"].append({
                 "name": value,
-                "description": description.value.strip(),
+                "description": (description.value or "").strip(),
                 "visibility": visibility.value,
             })
+
             page.pop_dialog()
             render()
 
@@ -426,14 +517,20 @@ def main(page: ft.Page):
                         "Отмена",
                         on_click=lambda ev: page.pop_dialog(),
                     ),
-                    ft.TextButton("Создать", on_click=save),
+                    ft.TextButton(
+                        "Создать",
+                        on_click=save,
+                    ),
                 ],
             )
         )
 
     def channels_screen():
         items = [
-            heading("Каналы", "Публикации и новости"),
+            heading(
+                "Каналы",
+                "Публикации и новости",
+            ),
             ft.Container(height=10),
             neon_button(
                 "Создать канал",
@@ -483,23 +580,45 @@ def main(page: ft.Page):
                     )
                 )
 
-        return ft.Column(items, expand=True, spacing=8)
+        return ft.Column(
+            items,
+            expand=True,
+            spacing=8,
+            scroll=ft.ScrollMode.AUTO,
+        )
 
     def profile_screen():
-        name = field("Имя", state["display_name"])
-        username = field("Username", state["username"])
-        about = field("О себе", state["about"])
+        name = field(
+            "Имя",
+            state["display_name"],
+        )
+
+        username = field(
+            "Username",
+            state["username"],
+        )
+
+        about = field(
+            "О себе",
+            state["about"],
+        )
 
         def save_profile(e):
-            state["display_name"] = name.value.strip()
-            state["username"] = username.value.strip().lstrip("@")
-            state["about"] = about.value.strip()
+            state["display_name"] = (name.value or "").strip()
+            state["username"] = (
+                (username.value or "").strip().lstrip("@")
+            )
+            state["about"] = (about.value or "").strip()
+
             notify("Изменения сохранены на этом устройстве")
             render()
 
         return ft.Column(
             [
-                heading("Профиль", "Твоя страница VibeGram"),
+                heading(
+                    "Профиль",
+                    "Твоя страница VibeGram",
+                ),
                 ft.Container(height=12),
                 panel(
                     ft.Column(
@@ -536,7 +655,10 @@ def main(page: ft.Page):
                 name,
                 username,
                 about,
-                neon_button("Сохранить профиль", save_profile),
+                neon_button(
+                    "Сохранить профиль",
+                    save_profile,
+                ),
                 section_card(
                     ft.Icons.SHIELD_OUTLINED,
                     "Приватность",
@@ -563,29 +685,39 @@ def main(page: ft.Page):
                 state["theme"] = "light"
                 page.theme_mode = ft.ThemeMode.LIGHT
                 page.bgcolor = "#F4F2FF"
+
                 C["bg"] = "#F4F2FF"
                 C["panel"] = "#FFFFFF"
                 C["text"] = "#17152A"
                 C["muted"] = "#77738D"
+
             else:
                 state["theme"] = "dark"
                 page.theme_mode = ft.ThemeMode.DARK
                 page.bgcolor = "#090914"
+
                 C["bg"] = "#090914"
                 C["panel"] = "#141426"
                 C["text"] = "#F5F3FF"
                 C["muted"] = "#9292AC"
+
             render()
 
         return ft.Column(
             [
-                heading("Оформление", "Настрой VibeGram под себя"),
+                heading(
+                    "Оформление",
+                    "Настрой VibeGram под себя",
+                ),
                 ft.Container(height=12),
                 panel(
                     ft.Column(
                         [
-                            text("Тема приложения", 16,
-                                 weight=ft.FontWeight.BOLD),
+                            text(
+                                "Тема приложения",
+                                16,
+                                weight=ft.FontWeight.BOLD,
+                            ),
                             text(
                                 "Выбирай тёмный или светлый режим",
                                 12,
@@ -603,8 +735,11 @@ def main(page: ft.Page):
                 panel(
                     ft.Column(
                         [
-                            text("Цветовая тема", 16,
-                                 weight=ft.FontWeight.BOLD),
+                            text(
+                                "Цветовая тема",
+                                16,
+                                weight=ft.FontWeight.BOLD,
+                            ),
                             text(
                                 "Сейчас используется неоновый фиолетово-синий стиль.",
                                 12,
@@ -644,6 +779,7 @@ def main(page: ft.Page):
                 ),
             ],
             spacing=12,
+            scroll=ft.ScrollMode.AUTO,
         )
 
     def render():
@@ -652,19 +788,27 @@ def main(page: ft.Page):
 
         if state["tab"] == "Чаты":
             screen = chats_screen()
+
         elif state["tab"] == "Контакты":
             screen = contacts_screen()
+
         elif state["tab"] == "Группы":
             screen = groups_screen()
+
         elif state["tab"] == "Каналы":
             screen = channels_screen()
+
         elif state["tab"] == "Профиль":
             screen = profile_screen()
+
         else:
             screen = settings_screen()
 
         header = ft.Container(
-            padding=ft.Padding.symmetric(horizontal=18, vertical=14),
+            padding=ft.Padding.symmetric(
+                horizontal=18,
+                vertical=14,
+            ),
             content=ft.Row(
                 [
                     ft.Row(
@@ -681,7 +825,10 @@ def main(page: ft.Page):
                                 alignment=ft.Alignment.CENTER,
                                 border_radius=12,
                                 gradient=ft.LinearGradient(
-                                    colors=[C["purple"], C["blue"]],
+                                    colors=[
+                                        C["purple"],
+                                        C["blue"],
+                                    ],
                                 ),
                             ),
                             text(
@@ -737,6 +884,7 @@ def main(page: ft.Page):
                 spacing=0,
             )
         )
+
         page.update()
 
     render()
