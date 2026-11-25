@@ -12,6 +12,9 @@ class FirebaseAuth(ft.Service):
     async def sign_out(self):
         return await self._invoke_method("sign_out", {})
 
+    async def get_auth_state(self):
+        return await self._invoke_method("get_auth_state", {})
+
 
 @ft.control("FletFirebaseAuth")
 class FletFirebaseAuth(ft.LayoutControl):
