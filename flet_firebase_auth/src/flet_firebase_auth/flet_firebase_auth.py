@@ -1,12 +1,14 @@
-from enum import Enum
-from typing import Any, Optional
 
 import flet as ft
 
+
+@ft.control("FirebaseAuth")
+class FirebaseAuth(ft.Service):
+    """Firebase authentication service."""
+
+
 @ft.control("FletFirebaseAuth")
 class FletFirebaseAuth(ft.LayoutControl):
-    """
-    FletFirebaseAuth Control description.
-    """
+    """VibeGram Firebase control."""
 
-    value: str
+    value: str = ""
