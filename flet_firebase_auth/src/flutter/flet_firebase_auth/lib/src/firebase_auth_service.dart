@@ -31,6 +31,17 @@ class FirebaseAuthService extends FletService {
     debugPrint('VibeGram: Firebase and Google initialized');
   }
 
+  Map<String, dynamic> _userData(fb.User user) {
+    return {
+      'success': true,
+      'authenticated': true,
+      'uid': user.uid,
+      'email': user.email ?? '',
+      'displayName': user.displayName ?? '',
+      'photoURL': user.photoURL ?? '',
+    };
+  }
+
   Future<dynamic> _onInvokeMethod(
     String name,
     dynamic args,
@@ -38,12 +49,24 @@ class FirebaseAuthService extends FletService {
     try {
       await _ensureInitialized();
 
+      if (name == 'get_auth_state') {
+        final user = fb.FirebaseAuth.instance.currentUser;
+
+        if (user == null) {
+          return {
+            'success': true,
+            'authenticated': false,
+          };
+        }
+
+        return _userData(user);
+      }
+
       if (name == 'sign_in') {
         final googleUser =
             await GoogleSignIn.instance.authenticate();
 
         final googleAuth = googleUser.authentication;
-
         final idToken = googleAuth.idToken;
 
         if (idToken == null) {
@@ -65,13 +88,7 @@ class FirebaseAuthService extends FletService {
           throw Exception('Firebase user not found');
         }
 
-        return {
-          'success': true,
-          'uid': user.uid,
-          'email': user.email ?? '',
-          'displayName': user.displayName ?? '',
-          'photoURL': user.photoURL ?? '',
-        };
+        return _userData(user);
       }
 
       if (name == 'sign_out') {
@@ -83,7 +100,7 @@ class FirebaseAuthService extends FletService {
 
       return {
         'success': false,
-        'error': 'Unknown method',
+        'error': 'Unknown method: $name',
       };
     } catch (e) {
       debugPrint('VibeGram auth error: $e');
