@@ -29,6 +29,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install "flet[all]==0.86.5"
+
       - name: Build Android APK
         run: |
           flet build apk \
@@ -36,7 +37,23 @@ jobs:
             --yes \
             --verbose
 
+      - name: Inspect Android Gradle settings
+        if: always()
+        run: |
+          echo "===== settings.gradle ====="
+          cat build/flutter/android/settings.gradle || true
+
+          echo "===== settings.gradle.kts ====="
+          cat build/flutter/android/settings.gradle.kts || true
+
+          echo "===== build.gradle ====="
+          cat build/flutter/android/build.gradle || true
+
+          echo "===== build.gradle.kts ====="
+          cat build/flutter/android/build.gradle.kts || true
+
       - name: Show APK fingerprints
+        if: success()
         run: |
           APK=$(find build/apk -name "*.apk" | head -n 1)
 
@@ -56,6 +73,7 @@ jobs:
           grep -i "SHA-256" fingerprints.txt || true
 
       - name: Save APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: VibeGram-Android
