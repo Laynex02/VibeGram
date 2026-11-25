@@ -53,7 +53,7 @@ def main(page: ft.Page):
         return ft.Container(
             content=control,
             bgcolor=C["panel"],
-            border=ft.border.all(1, C["border"]),
+            border=ft.Border.all(1, C["border"]),
             border_radius=18,
             padding=padding,
         )
