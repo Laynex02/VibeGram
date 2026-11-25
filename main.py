@@ -722,7 +722,7 @@ def main(page: ft.Page):
         bottom = ft.Container(
             content=nav,
             bgcolor=C["panel"],
-            border=ft.border.all(1, C["border"]),
+            border=ft.Border.all(1, C["border"]),
             padding=ft.Padding.symmetric(horizontal=5),
         )
 
