@@ -37,6 +37,7 @@ def main(page: ft.Page):
 
     state = {
         "authenticated": False,
+        "auth_loading": True,
         "auth_mode": "login",
         "uid": "",
         "email": "",
@@ -268,6 +269,29 @@ def main(page: ft.Page):
 
         except Exception as ex:
             notify(f"Ошибка выхода: {ex}")
+
+    # ==========================================
+    # RESTORE FIREBASE SESSION
+    # ==========================================
+    async def restore_auth():
+        try:
+            result = await firebase_auth.get_auth_state()
+
+            if isinstance(result, dict) and result.get("success"):
+                if result.get("authenticated"):
+                    state["authenticated"] = True
+                    state["uid"] = result.get("uid", "")
+                    state["email"] = result.get("email", "")
+                    state["display_name"] = (
+                        result.get("displayName", "")
+                        or state["display_name"]
+                    )
+
+        except Exception as ex:
+            print(f"VibeGram auth restore error: {ex}")
+
+        state["auth_loading"] = False
+        render()
 
     # ==========================================
     # WELCOME / AUTH SCREEN
@@ -1595,6 +1619,35 @@ def main(page: ft.Page):
     def render():
         page.clean()
 
+        if state["auth_loading"]:
+            page.add(
+                ft.SafeArea(
+                    content=ft.Container(
+                        expand=True,
+                        alignment=ft.Alignment.CENTER,
+                        content=ft.Column(
+                            [
+                                ft.ProgressRing(
+                                    color=C["purple"],
+                                    width=45,
+                                    height=45,
+                                ),
+                                txt(
+                                    "Подключаем VibeGram...",
+                                    16,
+                                    C["muted"],
+                                ),
+                            ],
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            spacing=18,
+                        ),
+                    ),
+                    expand=True,
+                )
+            )
+            page.update()
+            return
+
         if not state["authenticated"]:
             page.add(
                 ft.SafeArea(
@@ -1711,6 +1764,7 @@ def main(page: ft.Page):
     # START
     # ==========================================
     render()
+    page.run_task(restore_auth)
 
 
 ft.app(target=main)
