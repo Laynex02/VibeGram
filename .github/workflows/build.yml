@@ -29,28 +29,80 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install "flet[all]==0.86.5"
 
-      - name: Generate Android project
+      # Первый запуск создаёт Flutter-проект Flet.
+      # Ошибка Kotlin на этом этапе ожидаема.
+      - name: Generate Flutter project
         run: |
           flet build apk \
             --bundle-id com.vibegram.app \
             --yes \
-            --verbose || true
+            --verbose || echo "Continuing with Kotlin fix"
 
-      - name: Fix Kotlin version
+      # Исправляем Kotlin во всех вариантах Gradle-файлов.
+      - name: Fix Kotlin Gradle Plugin
         run: |
-          FILE="build/flutter/android/settings.gradle.kts"
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          import sys
 
-          if [ -f "$FILE" ]; then
-            sed -i 's/org.jetbrains.kotlin.android") version "[^"]*"/org.jetbrains.kotlin.android") version "2.1.0"/g' "$FILE"
-            sed -i 's/org.jetbrains.kotlin.android" version "[^"]*"/org.jetbrains.kotlin.android" version "2.1.0"/g' "$FILE"
-          fi
+          root = Path("build/flutter/android")
 
-          FILE="build/flutter/android/build.gradle.kts"
+          files = [
+              root / "settings.gradle",
+              root / "settings.gradle.kts",
+              root / "build.gradle",
+              root / "build.gradle.kts",
+          ]
 
-          if [ -f "$FILE" ]; then
-            sed -i "s/ext.kotlin_version = '[^']*'/ext.kotlin_version = '2.1.0'/g" "$FILE"
-          fi
+          patterns = [
+              re.compile(
+                  r'(id\s*\(?\s*["\']org\.jetbrains\.kotlin\.android'
+                  r'["\']\s*\)?\s+version\s+["\'])[^"\']+(["\'])'
+              ),
+              re.compile(
+                  r'(ext\.kotlin_version\s*=\s*["\'])[^"\']+(["\'])'
+              ),
+          ]
 
+          changed = 0
+
+          for file in files:
+              if not file.exists():
+                  continue
+
+              content = file.read_text()
+
+              for pattern in patterns:
+                  content, count = pattern.subn(
+                      lambda m: m.group(1) + "2.4.21" + m.group(2),
+                      content
+                  )
+                  changed += count
+
+              file.write_text(content)
+
+              print(f"\n===== {file} =====")
+              print(content)
+
+          if changed == 0:
+              print("ERROR: Kotlin version declaration not found!")
+              sys.exit(1)
+
+          print(f"\nUpdated Kotlin declarations: {changed}")
+          PY
+
+      # Проверяем настройки перед финальной сборкой.
+      - name: Verify Kotlin version
+        run: |
+          grep -n -E 'kotlin.android|kotlin_version' \
+            build/flutter/android/settings.gradle \
+            build/flutter/android/settings.gradle.kts \
+            build/flutter/android/build.gradle \
+            build/flutter/android/build.gradle.kts \
+            2>/dev/null || true
+
+      # Финальная сборка APK.
       - name: Build Android APK
         run: |
           flet build apk \
@@ -85,7 +137,8 @@ jobs:
 
           VERSION=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)
 
-          "$ANDROID_HOME/build-tools/$VERSION/apksigner" verify --print-certs "$APK" | tee fingerprints.txt
+          "$ANDROID_HOME/build-tools/$VERSION/apksigner" \
+            verify --print-certs "$APK" | tee fingerprints.txt
 
           echo "========== SHA-1 =========="
           grep -i "SHA-1" fingerprints.txt || true
