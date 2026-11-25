@@ -7,6 +7,8 @@ def main(page: ft.Page):
     firebase_auth = FirebaseAuth()
     page.services.append(firebase_auth)
 
+    file_picker = ft.FilePicker()
+
     page.title = "VibeGram"
     page.theme_mode = ft.ThemeMode.DARK
     page.bgcolor = "#090914"
@@ -28,14 +30,20 @@ def main(page: ft.Page):
 
     state = {
         "tab": "Чаты",
+        "subpage": None,
         "theme": "dark",
         "username": "",
         "display_name": "",
         "about": "",
+        "avatar": None,
+        "profile_bg": None,
         "groups": [],
         "channels": [],
         "messages": {},
         "current_chat": None,
+        "notifications": True,
+        "show_online": True,
+        "show_phone": False,
     }
 
     nav = ft.Row(
@@ -60,7 +68,6 @@ def main(page: ft.Page):
             padding=padding,
         )
 
-    # ИСПРАВЛЕНО: Button больше не получает аргумент text
     def neon_button(label, on_click, icon=None):
         return ft.ElevatedButton(
             content=ft.Text(label),
@@ -74,10 +81,23 @@ def main(page: ft.Page):
             ),
         )
 
-    def field(label, hint="", password=False):
+    def secondary_button(label, on_click, icon=None):
+        return ft.OutlinedButton(
+            content=ft.Text(label),
+            icon=icon,
+            on_click=on_click,
+            style=ft.ButtonStyle(
+                color=C["cyan"],
+                side=ft.BorderSide(1, C["border"]),
+                shape=ft.RoundedRectangleBorder(radius=14),
+            ),
+        )
+
+    def field(label, hint="", value="", password=False):
         return ft.TextField(
             label=label,
             hint_text=hint,
+            value=value,
             password=password,
             border_color=C["border"],
             focused_border_color=C["purple"],
@@ -103,9 +123,9 @@ def main(page: ft.Page):
 
         return ft.Column(items, spacing=5)
 
-    def section_card(icon, title, subtitle):
-        return panel(
-            ft.Row(
+    def section_card(icon, title, subtitle, on_click):
+        return ft.Container(
+            content=ft.Row(
                 [
                     ft.Container(
                         content=ft.Icon(
@@ -139,144 +159,13 @@ def main(page: ft.Page):
                     ),
                 ],
                 spacing=12,
-            )
-        )
-
-    def show_login():
-        page.clean()
-
-        logo = ft.Container(
-            content=ft.Text(
-                "V",
-                size=52,
-                weight=ft.FontWeight.BOLD,
-                color="white",
             ),
-            width=100,
-            height=100,
-            alignment=ft.Alignment.CENTER,
-            border_radius=28,
-            gradient=ft.LinearGradient(
-                begin=ft.Alignment.TOP_LEFT,
-                end=ft.Alignment.BOTTOM_RIGHT,
-                colors=[
-                    C["purple"],
-                    C["blue"],
-                    C["cyan"],
-                ],
-            ),
+            bgcolor=C["panel"],
+            border=ft.Border.all(1, C["border"]),
+            border_radius=18,
+            padding=16,
+            on_click=on_click,
         )
-
-        email = field("Email", "Твой Google-аккаунт")
-
-        page.add(
-            ft.Container(
-                expand=True,
-                bgcolor=C["bg"],
-                alignment=ft.Alignment.CENTER,
-                padding=25,
-                content=ft.Column(
-                    [
-                        logo,
-                        text(
-                            "VibeGram",
-                            32,
-                            weight=ft.FontWeight.BOLD,
-                        ),
-                        text(
-                            "Общайся. Создавай. Будь собой.",
-                            14,
-                            C["muted"],
-                        ),
-                        ft.Container(height=25),
-                        panel(
-                            ft.Column(
-                                [
-                                    text(
-                                        "Добро пожаловать!",
-                                        21,
-                                        weight=ft.FontWeight.BOLD,
-                                    ),
-                                    text(
-                                        "Войди в свой аккаунт VibeGram",
-                                        13,
-                                        C["muted"],
-                                    ),
-                                    email,
-                                    neon_button(
-                                        "Продолжить через Google",
-                                        lambda e: notify(
-                                            "Google-вход подключим через Firebase"
-                                        ),
-                                        ft.Icons.LOGIN,
-                                    ),
-                                    text(
-                                        "Авторизация пока настраивается. "
-                                        "Аккаунты не создаются до подключения Firebase.",
-                                        11,
-                                        C["muted"],
-                                    ),
-                                ],
-                                spacing=15,
-                            )
-                        ),
-                    ],
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    spacing=12,
-                    scroll=ft.ScrollMode.AUTO,
-                ),
-            )
-        )
-
-    def set_tab(tab):
-        state["tab"] = tab
-        render()
-
-    def create_nav():
-        nav.controls.clear()
-
-        items = [
-            ("Чаты", ft.Icons.CHAT_BUBBLE_OUTLINE),
-            ("Контакты", ft.Icons.PEOPLE_OUTLINE),
-            ("Каналы", ft.Icons.CAMPAIGN_OUTLINED),
-            ("Группы", ft.Icons.GROUP_OUTLINED),
-            ("Профиль", ft.Icons.PERSON_OUTLINE),
-        ]
-
-        for label, icon in items:
-            active = state["tab"] == label
-
-            nav.controls.append(
-                ft.Container(
-                    content=ft.Column(
-                        [
-                            ft.Icon(
-                                icon,
-                                size=22,
-                                color=(
-                                    C["cyan"]
-                                    if active
-                                    else C["muted"]
-                                ),
-                            ),
-                            text(
-                                label,
-                                10,
-                                C["cyan"] if active else C["muted"],
-                            ),
-                        ],
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=3,
-                    ),
-                    padding=ft.Padding.symmetric(
-                        vertical=10,
-                        horizontal=5,
-                    ),
-                    on_click=lambda e, t=label: set_tab(t),
-                    expand=True,
-                    alignment=ft.Alignment.CENTER,
-                )
-            )
 
     def empty_state(icon, title, subtitle):
         return ft.Container(
@@ -306,6 +195,489 @@ def main(page: ft.Page):
             ),
         )
 
+    # -----------------------------
+    # ВЫБОР АВАТАРА И ФОНА
+    # -----------------------------
+
+    async def pick_image(image_type):
+        try:
+            files = await file_picker.pick_files(
+                dialog_title="Выбери изображение",
+                file_type=ft.FilePickerFileType.IMAGE,
+                allow_multiple=False,
+            )
+
+            if not files:
+                return
+
+            selected = files[0]
+
+            if not selected.path:
+                notify(
+                    "Не удалось получить путь к изображению. "
+                    "Загрузка через сервер будет добавлена позже."
+                )
+                return
+
+            if image_type == "avatar":
+                state["avatar"] = selected.path
+                notify("Аватар изменён")
+
+            elif image_type == "background":
+                state["profile_bg"] = selected.path
+                notify("Фон профиля изменён")
+
+            render()
+
+        except Exception as ex:
+            notify(f"Ошибка выбора изображения: {ex}")
+
+    # -----------------------------
+    # РЕДАКТИРОВАНИЕ ПРОФИЛЯ
+    # -----------------------------
+
+    def edit_profile():
+        name = field(
+            "Имя",
+            "Твоё имя",
+            state["display_name"],
+        )
+
+        username = field(
+            "Username",
+            "Например, vibe_user",
+            state["username"],
+        )
+
+        about = field(
+            "О себе",
+            "Расскажи немного о себе",
+            state["about"],
+        )
+
+        def save(e):
+            new_username = (username.value or "").strip().lstrip("@")
+
+            if not new_username:
+                notify("Username не может быть пустым")
+                return
+
+            state["display_name"] = (name.value or "").strip()
+            state["username"] = new_username
+            state["about"] = (about.value or "").strip()
+
+            page.pop_dialog()
+            render()
+            notify("Профиль обновлён")
+
+        page.show_dialog(
+            ft.AlertDialog(
+                modal=True,
+                title=text(
+                    "Изменить профиль",
+                    21,
+                    weight=ft.FontWeight.BOLD,
+                ),
+                content=ft.Column(
+                    [
+                        name,
+                        username,
+                        about,
+                    ],
+                    tight=True,
+                    spacing=12,
+                    width=320,
+                ),
+                actions=[
+                    ft.TextButton(
+                        "Отмена",
+                        on_click=lambda e: page.pop_dialog(),
+                    ),
+                    ft.TextButton(
+                        "Сохранить",
+                        on_click=save,
+                    ),
+                ],
+            )
+        )
+
+    # -----------------------------
+    # ПРОФИЛЬ
+    # -----------------------------
+
+    def profile_screen():
+        if state["avatar"]:
+            avatar = ft.Container(
+                content=ft.Image(
+                    src=state["avatar"],
+                    width=112,
+                    height=112,
+                    fit=ft.BoxFit.COVER,
+                ),
+                width=112,
+                height=112,
+                border_radius=60,
+                clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
+                border=ft.Border.all(3, C["cyan"]),
+            )
+        else:
+            avatar = ft.Container(
+                content=ft.Icon(
+                    ft.Icons.PERSON,
+                    size=58,
+                    color=C["cyan"],
+                ),
+                width=112,
+                height=112,
+                bgcolor="#25213F",
+                border_radius=60,
+                alignment=ft.Alignment.CENTER,
+                border=ft.Border.all(3, C["cyan"]),
+            )
+
+        profile_content = ft.Column(
+            [
+                avatar,
+                text(
+                    state["display_name"] or "Твоё имя",
+                    23,
+                    weight=ft.FontWeight.BOLD,
+                ),
+                text(
+                    "@" + state["username"]
+                    if state["username"]
+                    else "@username",
+                    14,
+                    C["muted"],
+                ),
+                text(
+                    state["about"] or "Расскажи о себе",
+                    13,
+                    C["muted"],
+                ),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=10,
+        )
+
+        if state["profile_bg"]:
+            background = ft.Image(
+                src=state["profile_bg"],
+                width=500,
+                height=280,
+                fit=ft.BoxFit.COVER,
+            )
+        else:
+            background = ft.Container(
+                bgcolor="#1B1B32",
+                gradient=ft.LinearGradient(
+                    begin=ft.Alignment.TOP_LEFT,
+                    end=ft.Alignment.BOTTOM_RIGHT,
+                    colors=[
+                        "#29204F",
+                        "#17172E",
+                        "#102B40",
+                    ],
+                ),
+            )
+
+        profile_banner = ft.Container(
+            content=ft.Stack(
+                [
+                    background,
+                    ft.Container(
+                        content=profile_content,
+                        alignment=ft.Alignment.CENTER,
+                        bgcolor="#99090914",
+                        expand=True,
+                    ),
+                ],
+            ),
+            height=280,
+            border_radius=22,
+            clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
+            border=ft.Border.all(1, C["border"]),
+        )
+
+        return ft.Column(
+            [
+                heading(
+                    "Профиль",
+                    "Твоя страница VibeGram",
+                ),
+
+                ft.Container(height=8),
+
+                profile_banner,
+
+                ft.Row(
+                    [
+                        ft.Expanded(
+                            child=secondary_button(
+                                "Изменить аватар",
+                                lambda e: pick_image("avatar"),
+                                ft.Icons.CAMERA_ALT_OUTLINED,
+                            )
+                        ),
+                        ft.Expanded(
+                            child=secondary_button(
+                                "Изменить фон",
+                                lambda e: pick_image("background"),
+                                ft.Icons.IMAGE_OUTLINED,
+                            )
+                        ),
+                    ],
+                    spacing=8,
+                ),
+
+                neon_button(
+                    "Изменить профиль",
+                    lambda e: edit_profile(),
+                    ft.Icons.EDIT_OUTLINED,
+                ),
+
+                ft.Container(height=5),
+
+                section_card(
+                    ft.Icons.SHIELD_OUTLINED,
+                    "Приватность",
+                    "Настройки безопасности и видимости",
+                    lambda e: open_subpage("privacy"),
+                ),
+
+                section_card(
+                    ft.Icons.NOTIFICATIONS_OUTLINED,
+                    "Уведомления",
+                    "Настройка уведомлений",
+                    lambda e: open_subpage("notifications"),
+                ),
+
+                section_card(
+                    ft.Icons.INFO_OUTLINE,
+                    "О приложении",
+                    "VibeGram — общайся без границ",
+                    lambda e: open_subpage("about"),
+                ),
+            ],
+            spacing=12,
+            scroll=ft.ScrollMode.AUTO,
+        )
+
+    # -----------------------------
+    # ПОДРАЗДЕЛЫ ПРОФИЛЯ
+    # -----------------------------
+
+    def open_subpage(name):
+        state["subpage"] = name
+        render()
+
+    def back_to_profile(e):
+        state["subpage"] = None
+        render()
+
+    def subpage_screen(title, subtitle, controls):
+        return ft.Column(
+            [
+                ft.Row(
+                    [
+                        ft.IconButton(
+                            ft.Icons.ARROW_BACK,
+                            icon_color=C["cyan"],
+                            on_click=back_to_profile,
+                        ),
+                        heading(title, subtitle),
+                    ],
+                    spacing=8,
+                ),
+                ft.Container(height=12),
+                *controls,
+            ],
+            spacing=12,
+            scroll=ft.ScrollMode.AUTO,
+            expand=True,
+        )
+
+    def privacy_screen():
+        return subpage_screen(
+            "Приватность",
+            "Управляй видимостью своего профиля",
+            [
+                panel(
+                    ft.Column(
+                        [
+                            text(
+                                "Показывать статус онлайн",
+                                15,
+                                weight=ft.FontWeight.BOLD,
+                            ),
+                            text(
+                                "Другие пользователи смогут видеть, "
+                                "когда ты в сети.",
+                                12,
+                                C["muted"],
+                            ),
+                            ft.Switch(
+                                value=state["show_online"],
+                                active_color=C["purple"],
+                                on_change=lambda e: change_setting(
+                                    "show_online",
+                                    e.control.value,
+                                ),
+                            ),
+                        ],
+                        spacing=8,
+                    )
+                ),
+                panel(
+                    ft.Column(
+                        [
+                            text(
+                                "Показывать номер телефона",
+                                15,
+                                weight=ft.FontWeight.BOLD,
+                            ),
+                            text(
+                                "Разрешить другим пользователям "
+                                "видеть номер телефона.",
+                                12,
+                                C["muted"],
+                            ),
+                            ft.Switch(
+                                value=state["show_phone"],
+                                active_color=C["purple"],
+                                on_change=lambda e: change_setting(
+                                    "show_phone",
+                                    e.control.value,
+                                ),
+                            ),
+                        ],
+                        spacing=8,
+                    )
+                ),
+                text(
+                    "Эти настройки пока сохраняются только "
+                    "в текущем запуске приложения.",
+                    12,
+                    C["muted"],
+                ),
+            ],
+        )
+
+    def notifications_screen():
+        return subpage_screen(
+            "Уведомления",
+            "Настрой уведомления VibeGram",
+            [
+                panel(
+                    ft.Column(
+                        [
+                            text(
+                                "Уведомления приложения",
+                                16,
+                                weight=ft.FontWeight.BOLD,
+                            ),
+                            text(
+                                "Включить или отключить уведомления.",
+                                12,
+                                C["muted"],
+                            ),
+                            ft.Switch(
+                                value=state["notifications"],
+                                active_color=C["purple"],
+                                on_change=lambda e: change_setting(
+                                    "notifications",
+                                    e.control.value,
+                                ),
+                            ),
+                        ],
+                        spacing=8,
+                    )
+                ),
+                text(
+                    "Настоящие push-уведомления подключим "
+                    "при настройке Firebase.",
+                    12,
+                    C["muted"],
+                ),
+            ],
+        )
+
+    def about_screen():
+        return subpage_screen(
+            "О приложении",
+            "Информация о VibeGram",
+            [
+                panel(
+                    ft.Column(
+                        [
+                            ft.Container(
+                                content=text(
+                                    "V",
+                                    38,
+                                    "white",
+                                    ft.FontWeight.BOLD,
+                                ),
+                                width=85,
+                                height=85,
+                                alignment=ft.Alignment.CENTER,
+                                border_radius=22,
+                                gradient=ft.LinearGradient(
+                                    colors=[
+                                        C["purple"],
+                                        C["blue"],
+                                        C["cyan"],
+                                    ],
+                                ),
+                            ),
+                            text(
+                                "VibeGram",
+                                24,
+                                weight=ft.FontWeight.BOLD,
+                            ),
+                            text(
+                                "Общайся. Создавай. Будь собой.",
+                                13,
+                                C["muted"],
+                            ),
+                            text(
+                                "Версия 1.0",
+                                12,
+                                C["cyan"],
+                            ),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=10,
+                    )
+                ),
+                panel(
+                    ft.Column(
+                        [
+                            text(
+                                "О проекте",
+                                17,
+                                weight=ft.FontWeight.BOLD,
+                            ),
+                            text(
+                                "VibeGram — приложение для общения, "
+                                "личных переписок, групп и каналов.",
+                                13,
+                                C["muted"],
+                            ),
+                        ],
+                        spacing=8,
+                    )
+                ),
+            ],
+        )
+
+    def change_setting(key, value):
+        state[key] = value
+        notify("Настройка изменена")
+
+    # -----------------------------
+    # ЧАТЫ
+    # -----------------------------
+
     def chats_screen():
         return ft.Column(
             [
@@ -318,7 +690,6 @@ def main(page: ft.Page):
                     "Поиск",
                     "Найти переписку или пользователя",
                 ),
-                ft.Container(height=10),
                 empty_state(
                     ft.Icons.CHAT_BUBBLE_OUTLINE,
                     "Пока нет чатов",
@@ -329,6 +700,10 @@ def main(page: ft.Page):
             spacing=8,
         )
 
+    # -----------------------------
+    # КОНТАКТЫ
+    # -----------------------------
+
     def contacts_screen():
         return ft.Column(
             [
@@ -337,29 +712,54 @@ def main(page: ft.Page):
                     "Люди из твоей телефонной книги",
                 ),
                 ft.Container(height=12),
-                section_card(
-                    ft.Icons.PERSON_SEARCH,
-                    "Найти пользователей",
-                    "Поиск по username VibeGram",
+                panel(
+                    ft.Row(
+                        [
+                            ft.Icon(
+                                ft.Icons.PERSON_SEARCH,
+                                color=C["cyan"],
+                                size=28,
+                            ),
+                            ft.Column(
+                                [
+                                    text(
+                                        "Найти пользователей",
+                                        15,
+                                        weight=ft.FontWeight.BOLD,
+                                    ),
+                                    text(
+                                        "Поиск по username VibeGram",
+                                        12,
+                                        C["muted"],
+                                    ),
+                                ],
+                                spacing=4,
+                                expand=True,
+                            ),
+                        ],
+                    )
                 ),
                 ft.Container(height=10),
                 neon_button(
-                    "Разрешить доступ к контактам",
+                    "Контакты скоро появятся",
                     lambda e: notify(
-                        "Доступ к телефонной книге подключим через Android"
+                        "Подключим контакты вместе с серверами и Firebase"
                     ),
                     ft.Icons.CONTACTS,
                 ),
-                ft.Container(height=12),
                 empty_state(
                     ft.Icons.PEOPLE_OUTLINE,
                     "Контактов пока нет",
-                    "Сначала подключим аккаунты и безопасный поиск контактов.",
+                    "Поиск и синхронизацию подключим позже.",
                 ),
             ],
             expand=True,
             spacing=8,
         )
+
+    # -----------------------------
+    # ГРУППЫ
+    # -----------------------------
 
     def create_group(e):
         name = field(
@@ -395,11 +795,12 @@ def main(page: ft.Page):
                     [name, description],
                     tight=True,
                     spacing=12,
+                    width=300,
                 ),
                 actions=[
                     ft.TextButton(
                         "Отмена",
-                        on_click=lambda ev: page.pop_dialog(),
+                        on_click=lambda e: page.pop_dialog(),
                     ),
                     ft.TextButton(
                         "Создать",
@@ -415,13 +816,11 @@ def main(page: ft.Page):
                 "Группы",
                 "Общайся сразу с несколькими людьми",
             ),
-            ft.Container(height=10),
             neon_button(
                 "Создать группу",
                 create_group,
                 ft.Icons.GROUP_ADD,
             ),
-            ft.Container(height=10),
         ]
 
         if not state["groups"]:
@@ -462,9 +861,13 @@ def main(page: ft.Page):
         return ft.Column(
             items,
             expand=True,
-            spacing=8,
+            spacing=10,
             scroll=ft.ScrollMode.AUTO,
         )
+
+    # -----------------------------
+    # КАНАЛЫ
+    # -----------------------------
 
     def create_channel(e):
         name = field(
@@ -511,11 +914,12 @@ def main(page: ft.Page):
                     [name, description, visibility],
                     tight=True,
                     spacing=12,
+                    width=300,
                 ),
                 actions=[
                     ft.TextButton(
                         "Отмена",
-                        on_click=lambda ev: page.pop_dialog(),
+                        on_click=lambda e: page.pop_dialog(),
                     ),
                     ft.TextButton(
                         "Создать",
@@ -531,13 +935,11 @@ def main(page: ft.Page):
                 "Каналы",
                 "Публикации и новости",
             ),
-            ft.Container(height=10),
             neon_button(
                 "Создать канал",
                 create_channel,
                 ft.Icons.ADD,
             ),
-            ft.Container(height=10),
         ]
 
         if not state["channels"]:
@@ -583,101 +985,13 @@ def main(page: ft.Page):
         return ft.Column(
             items,
             expand=True,
-            spacing=8,
-            scroll=ft.ScrollMode.AUTO,
-        )
-
-    def profile_screen():
-        name = field(
-            "Имя",
-            state["display_name"],
-        )
-
-        username = field(
-            "Username",
-            state["username"],
-        )
-
-        about = field(
-            "О себе",
-            state["about"],
-        )
-
-        def save_profile(e):
-            state["display_name"] = (name.value or "").strip()
-            state["username"] = (
-                (username.value or "").strip().lstrip("@")
-            )
-            state["about"] = (about.value or "").strip()
-
-            notify("Изменения сохранены на этом устройстве")
-            render()
-
-        return ft.Column(
-            [
-                heading(
-                    "Профиль",
-                    "Твоя страница VibeGram",
-                ),
-                ft.Container(height=12),
-                panel(
-                    ft.Column(
-                        [
-                            ft.Container(
-                                content=ft.Icon(
-                                    ft.Icons.PERSON,
-                                    size=45,
-                                    color=C["cyan"],
-                                ),
-                                width=90,
-                                height=90,
-                                bgcolor="#25213F",
-                                border_radius=45,
-                                alignment=ft.Alignment.CENTER,
-                            ),
-                            text(
-                                state["display_name"] or "Твоё имя",
-                                20,
-                                weight=ft.FontWeight.BOLD,
-                            ),
-                            text(
-                                "@" + state["username"]
-                                if state["username"]
-                                else "@username",
-                                13,
-                                C["muted"],
-                            ),
-                        ],
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=8,
-                    )
-                ),
-                name,
-                username,
-                about,
-                neon_button(
-                    "Сохранить профиль",
-                    save_profile,
-                ),
-                section_card(
-                    ft.Icons.SHIELD_OUTLINED,
-                    "Приватность",
-                    "Настройки безопасности и видимости",
-                ),
-                section_card(
-                    ft.Icons.NOTIFICATIONS_OUTLINED,
-                    "Уведомления",
-                    "Настройка уведомлений",
-                ),
-                section_card(
-                    ft.Icons.INFO_OUTLINE,
-                    "О приложении",
-                    "VibeGram — общайся без границ",
-                ),
-            ],
             spacing=10,
             scroll=ft.ScrollMode.AUTO,
         )
+
+    # -----------------------------
+    # НАСТРОЙКИ
+    # -----------------------------
 
     def settings_screen():
         def change_theme(e):
@@ -690,6 +1004,7 @@ def main(page: ft.Page):
                 C["panel"] = "#FFFFFF"
                 C["text"] = "#17152A"
                 C["muted"] = "#77738D"
+                C["border"] = "#DDD9EA"
 
             else:
                 state["theme"] = "dark"
@@ -700,6 +1015,7 @@ def main(page: ft.Page):
                 C["panel"] = "#141426"
                 C["text"] = "#F5F3FF"
                 C["muted"] = "#9292AC"
+                C["border"] = "#292944"
 
             render()
 
@@ -709,7 +1025,6 @@ def main(page: ft.Page):
                     "Оформление",
                     "Настрой VibeGram под себя",
                 ),
-                ft.Container(height=12),
                 panel(
                     ft.Column(
                         [
@@ -741,7 +1056,7 @@ def main(page: ft.Page):
                                 weight=ft.FontWeight.BOLD,
                             ),
                             text(
-                                "Сейчас используется неоновый фиолетово-синий стиль.",
+                                "Неоновый фиолетово-синий стиль.",
                                 12,
                                 C["muted"],
                             ),
@@ -772,21 +1087,82 @@ def main(page: ft.Page):
                         spacing=10,
                     )
                 ),
-                text(
-                    "Настраиваемые палитры и фоны чатов добавим следующим этапом.",
-                    12,
-                    C["muted"],
-                ),
             ],
             spacing=12,
             scroll=ft.ScrollMode.AUTO,
         )
 
+    # -----------------------------
+    # НИЖНЯЯ НАВИГАЦИЯ
+    # -----------------------------
+
+    def set_tab(tab):
+        state["tab"] = tab
+        state["subpage"] = None
+        render()
+
+    def create_nav():
+        nav.controls.clear()
+
+        items = [
+            ("Чаты", ft.Icons.CHAT_BUBBLE_OUTLINE),
+            ("Контакты", ft.Icons.PEOPLE_OUTLINE),
+            ("Каналы", ft.Icons.CAMPAIGN_OUTLINED),
+            ("Группы", ft.Icons.GROUP_OUTLINED),
+            ("Профиль", ft.Icons.PERSON_OUTLINE),
+        ]
+
+        for label, icon in items:
+            active = state["tab"] == label
+
+            nav.controls.append(
+                ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.Icon(
+                                icon,
+                                size=22,
+                                color=C["cyan"] if active else C["muted"],
+                            ),
+                            text(
+                                label,
+                                10,
+                                C["cyan"] if active else C["muted"],
+                            ),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=3,
+                    ),
+                    padding=ft.Padding.symmetric(
+                        vertical=10,
+                        horizontal=5,
+                    ),
+                    on_click=lambda e, t=label: set_tab(t),
+                    expand=True,
+                    alignment=ft.Alignment.CENTER,
+                )
+            )
+
+    # -----------------------------
+    # ГЛАВНЫЙ РЕНДЕР
+    # -----------------------------
+
     def render():
         page.clean()
         create_nav()
 
-        if state["tab"] == "Чаты":
+        subpage = state["subpage"]
+
+        if subpage == "privacy":
+            screen = privacy_screen()
+
+        elif subpage == "notifications":
+            screen = notifications_screen()
+
+        elif subpage == "about":
+            screen = about_screen()
+
+        elif state["tab"] == "Чаты":
             screen = chats_screen()
 
         elif state["tab"] == "Контакты":
