@@ -3,6 +3,7 @@ import 'package:flet/flet.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class FirebaseAuthService extends FletService {
@@ -28,7 +29,7 @@ class FirebaseAuthService extends FletService {
 
     await GoogleSignIn.instance.initialize();
 
-    debugPrint('VibeGram: Firebase and Google initialized');
+    debugPrint('VibeGram: Firebase initialized');
   }
 
   Map<String, dynamic> _userData(fb.User user) {
@@ -40,6 +41,31 @@ class FirebaseAuthService extends FletService {
       'displayName': user.displayName ?? '',
       'photoURL': user.photoURL ?? '',
     };
+  }
+
+  Future<void> _ensureUserDocument(fb.User user) async {
+    final ref = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
+
+    final snapshot = await ref.get();
+
+    final data = <String, dynamic>{
+      'uid': user.uid,
+      'email': user.email ?? '',
+      'displayName': user.displayName ?? '',
+      'avatarUrl': user.photoURL ?? '',
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    if (!snapshot.exists) {
+      data['username'] = '';
+      data['about'] = '';
+      data['backgroundUrl'] = '';
+      data['createdAt'] = FieldValue.serverTimestamp();
+    }
+
+    await ref.set(data, SetOptions(merge: true));
   }
 
   Future<dynamic> _onInvokeMethod(
@@ -58,6 +84,8 @@ class FirebaseAuthService extends FletService {
             'authenticated': false,
           };
         }
+
+        await _ensureUserDocument(user);
 
         return _userData(user);
       }
@@ -88,7 +116,51 @@ class FirebaseAuthService extends FletService {
           throw Exception('Firebase user not found');
         }
 
+        await _ensureUserDocument(user);
+
         return _userData(user);
+      }
+
+      if (name == 'get_user_profile') {
+        final user = fb.FirebaseAuth.instance.currentUser;
+
+        if (user == null) {
+          throw Exception('User is not authenticated');
+        }
+
+        final snapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        return {
+          'success': true,
+          'profile': snapshot.data() ?? {},
+        };
+      }
+
+      if (name == 'save_user_profile') {
+        final user = fb.FirebaseAuth.instance.currentUser;
+
+        if (user == null) {
+          throw Exception('User is not authenticated');
+        }
+
+        final profile = Map<String, dynamic>.from(
+          args as Map,
+        );
+
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .set({
+          'username': profile['username'] ?? '',
+          'displayName': profile['displayName'] ?? '',
+          'about': profile['about'] ?? '',
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        return {'success': true};
       }
 
       if (name == 'sign_out') {
@@ -103,7 +175,7 @@ class FirebaseAuthService extends FletService {
         'error': 'Unknown method: $name',
       };
     } catch (e) {
-      debugPrint('VibeGram auth error: $e');
+      debugPrint('VibeGram Firebase error: $e');
 
       return {
         'success': false,
