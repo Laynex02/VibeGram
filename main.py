@@ -249,6 +249,14 @@ def main(page: ft.Page):
         except Exception as ex:
             notify(f"Ошибка Google: {ex}")
 
+    # Отдельный обработчик нажатия кнопки Google
+    def start_google_sign_in(e):
+        try:
+            notify("Кнопка нажата!")
+            page.run_task(google_sign_in, e)
+        except Exception as ex:
+            notify(f"Ошибка запуска Google: {ex}")
+
     async def google_sign_out(e):
         try:
             result = await firebase_auth.sign_out()
@@ -392,7 +400,7 @@ def main(page: ft.Page):
                                 ft.Container(height=10),
                                 button(
                                     "Продолжить с Google",
-                                    google_sign_in,
+                                    start_google_sign_in,
                                     ft.Icons.LOGIN,
                                 ),
                                 txt(
