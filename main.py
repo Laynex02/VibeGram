@@ -2,7 +2,6 @@
 import flet as ft
 from flet_firebase_auth import FirebaseAuth
 
-
 def main(page: ft.Page):
     # ==========================================
     # SERVICES
@@ -249,11 +248,12 @@ def main(page: ft.Page):
         except Exception as ex:
             notify(f"Ошибка Google: {ex}")
 
-    # Отдельный обработчик нажатия кнопки Google
-async def start_google_sign_in(e):
-    await google_sign_in(e)
 
-async def google_sign_out(e):
+    # Отдельный обработчик нажатия кнопки Google
+    async def start_google_sign_in(e):
+        await google_sign_in(e)
+
+    async def google_sign_out(e):
         try:
             result = await firebase_auth.sign_out()
 
@@ -296,6 +296,7 @@ async def google_sign_out(e):
 
         state["auth_loading"] = False
         render()
+
 
     # ==========================================
     # WELCOME / AUTH SCREEN
