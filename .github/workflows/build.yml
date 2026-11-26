@@ -58,6 +58,51 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install "flet[all]==0.86.5"
 
+      - name: Check Python files
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          import sys
+
+          excluded = {
+              ".git",
+              ".venv",
+              "venv",
+              "__pycache__",
+              "build",
+          }
+
+          files = []
+
+          for path in Path(".").rglob("*.py"):
+              if any(part in excluded for part in path.parts):
+                  continue
+              files.append(path)
+
+          print(f"Found Python files: {len(files)}")
+
+          errors = 0
+
+          for path in files:
+              try:
+                  ast.parse(
+                      path.read_text(encoding="utf-8"),
+                      filename=str(path)
+                  )
+                  print(f"OK: {path}")
+              except Exception as error:
+                  errors += 1
+                  print(f"\nPYTHON ERROR: {path}")
+                  print(error)
+
+          if errors:
+              print(f"\nFound {errors} Python errors!")
+              sys.exit(1)
+
+          print("\nAll Python files passed syntax check!")
+          PY
+
       - name: Generate Flutter project
         run: |
           flet build apk \
@@ -65,7 +110,7 @@ jobs:
             --product "VibeGram" \
             --python-version 3.13 \
             --yes \
-            --verbose || echo "Continuing with Kotlin fix"
+            --verbose || echo "Initial build failed; checking generated files"
 
       - name: Configure Flutter PATH
         run: |
