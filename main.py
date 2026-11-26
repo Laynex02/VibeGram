@@ -250,15 +250,10 @@ def main(page: ft.Page):
             notify(f"Ошибка Google: {ex}")
 
     # Отдельный обработчик нажатия кнопки Google
-    async def start_google_sign_in(e):
+async def start_google_sign_in(e):
     await google_sign_in(e)
-        try:
-            notify("Кнопка нажата!")
-            page.run_task(google_sign_in, e)
-        except Exception as ex:
-            notify(f"Ошибка запуска Google: {ex}")
 
-    async def google_sign_out(e):
+async def google_sign_out(e):
         try:
             result = await firebase_auth.sign_out()
 
