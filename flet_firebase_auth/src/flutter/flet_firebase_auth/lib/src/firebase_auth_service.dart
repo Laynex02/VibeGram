@@ -13,6 +13,9 @@ class FirebaseAuthService extends FletService {
 
   FirebaseFirestore get _db => FirebaseFirestore.instance;
 
+  static const String _serverClientId =
+      '280226723716-4pi2vpbrl1fp8gomnjmklgllo3s5s04m.apps.googleusercontent.com';
+
   @override
   void init() {
     super.init();
@@ -29,7 +32,9 @@ class FirebaseAuthService extends FletService {
       await Firebase.initializeApp();
     }
 
-    await GoogleSignIn.instance.initialize();
+    await GoogleSignIn.instance.initialize(
+      serverClientId: _serverClientId,
+    );
 
     debugPrint('VibeGram: Firebase initialized');
   }
