@@ -250,7 +250,8 @@ def main(page: ft.Page):
             notify(f"Ошибка Google: {ex}")
 
     # Отдельный обработчик нажатия кнопки Google
-    def start_google_sign_in(e):
+    async def start_google_sign_in(e):
+    await google_sign_in(e)
         try:
             notify("Кнопка нажата!")
             page.run_task(google_sign_in, e)
