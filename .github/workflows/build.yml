@@ -63,6 +63,7 @@ jobs:
           flet build apk \
             --bundle-id com.vibegram.app \
             --product "VibeGram" \
+            --python-version 3.13 \
             --yes \
             --verbose || echo "Continuing with Kotlin fix"
 
@@ -141,6 +142,7 @@ jobs:
           flet build apk \
             --bundle-id com.vibegram.app \
             --product "VibeGram" \
+            --python-version 3.13 \
             --yes \
             --verbose
 
