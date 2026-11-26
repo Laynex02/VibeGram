@@ -1,3 +1,4 @@
+
 name: Build VibeGram APK
 
 on:
@@ -29,16 +30,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install "flet[all]==0.86.5"
 
-      # Первый запуск создаёт Flutter-проект Flet.
-      # Ошибка Kotlin на этом этапе ожидаема.
       - name: Generate Flutter project
         run: |
           flet build apk \
             --bundle-id com.vibegram.app \
+            --product "VibeGram" \
             --yes \
             --verbose || echo "Continuing with Kotlin fix"
 
-      # Исправляем Kotlin во всех вариантах Gradle-файлов.
       - name: Fix Kotlin Gradle Plugin
         run: |
           python - <<'PY'
@@ -92,7 +91,6 @@ jobs:
           print(f"\nUpdated Kotlin declarations: {changed}")
           PY
 
-      # Проверяем настройки перед финальной сборкой.
       - name: Verify Kotlin version
         run: |
           grep -n -E 'kotlin.android|kotlin_version' \
@@ -102,11 +100,11 @@ jobs:
             build/flutter/android/build.gradle.kts \
             2>/dev/null || true
 
-      # Финальная сборка APK.
       - name: Build Android APK
         run: |
           flet build apk \
             --bundle-id com.vibegram.app \
+            --product "VibeGram" \
             --yes \
             --verbose
 
