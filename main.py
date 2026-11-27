@@ -250,8 +250,9 @@ def main(page: ft.Page):
 
 
     # Отдельный обработчик нажатия кнопки Google
-    async def start_google_sign_in(e):
-        await google_sign_in(e)
+def start_google_sign_in(e):
+    print("VIBEGRAM: GOOGLE BUTTON CLICKED")
+    page.run_task(google_sign_in, e)
 
     async def google_sign_out(e):
         try:
