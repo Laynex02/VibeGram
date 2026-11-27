@@ -2,6 +2,7 @@
 import flet as ft
 from flet_firebase_auth import FirebaseAuth
 
+
 def main(page: ft.Page):
     # ==========================================
     # SERVICES
@@ -40,40 +41,33 @@ def main(page: ft.Page):
         "auth_mode": "login",
         "uid": "",
         "email": "",
-
         "tab": "Чаты",
         "subpage": None,
         "selected_channel": None,
-
         "username": "",
         "display_name": "",
         "about": "",
         "avatar": None,
         "profile_bg": None,
-
         "groups": [],
         "channels": [],
         "folders": [],
-
         "notifications": True,
         "message_notifications": True,
         "group_notifications": True,
         "channel_notifications": True,
         "sound": True,
         "vibration": True,
-
         "show_online": True,
         "show_phone": False,
         "show_photo": True,
         "allow_messages": True,
         "allow_groups": True,
         "read_receipts": True,
-
         "language": "Русский",
         "font_size": "Средний",
         "chat_wallpaper": "Стандартные",
         "auto_download": True,
-
         "theme": "dark",
         "vibe_plus": False,
     }
@@ -99,9 +93,7 @@ def main(page: ft.Page):
         )
 
     def heading(title, subtitle=None):
-        items = [
-            txt(title, 25, weight=ft.FontWeight.BOLD)
-        ]
+        items = [txt(title, 25, weight=ft.FontWeight.BOLD)]
 
         if subtitle:
             items.append(txt(subtitle, 13, C["muted"]))
@@ -146,9 +138,7 @@ def main(page: ft.Page):
         )
 
     def notify(message):
-        page.snack_bar = ft.SnackBar(
-            content=txt(message)
-        )
+        page.snack_bar = ft.SnackBar(content=txt(message))
         page.snack_bar.open = True
         page.update()
 
@@ -202,19 +192,6 @@ def main(page: ft.Page):
         )
 
     # ==========================================
-    # SCREEN TRANSITIONS
-    # ==========================================
-    content_area = ft.Container(expand=True)
-
-    def transition(control):
-        content_area.content = ft.AnimatedSwitcher(
-            content=control,
-            duration=300,
-            reverse_duration=200,
-        )
-        page.update()
-
-    # ==========================================
     # GOOGLE AUTHENTICATION
     # ==========================================
     async def google_sign_in(e):
@@ -248,11 +225,9 @@ def main(page: ft.Page):
         except Exception as ex:
             notify(f"Ошибка Google: {ex}")
 
-
-    # Отдельный обработчик нажатия кнопки Google
-def start_google_sign_in(e):
-    print("VIBEGRAM: GOOGLE BUTTON CLICKED")
-    page.run_task(google_sign_in, e)
+    def start_google_sign_in(e):
+        print("VIBEGRAM: GOOGLE BUTTON CLICKED")
+        page.run_task(google_sign_in, e)
 
     async def google_sign_out(e):
         try:
@@ -265,7 +240,6 @@ def start_google_sign_in(e):
             state["authenticated"] = False
             state["uid"] = ""
             state["email"] = ""
-
             state["tab"] = "Чаты"
             state["subpage"] = None
 
@@ -297,7 +271,6 @@ def start_google_sign_in(e):
 
         state["auth_loading"] = False
         render()
-
 
     # ==========================================
     # WELCOME / AUTH SCREEN
@@ -413,11 +386,7 @@ def start_google_sign_in(e):
                         )
                     ),
                     ft.Container(height=15),
-                    txt(
-                        "VibeGram • Версия 1.0",
-                        11,
-                        C["muted"],
-                    ),
+                    txt("VibeGram • Версия 1.0", 11, C["muted"]),
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=12,
@@ -914,7 +883,6 @@ def start_google_sign_in(e):
 
     def create_post(e):
         channel = state["selected_channel"]
-
         post_field = field("Сообщение", "Напиши публикацию...")
 
         def publish(ev):
@@ -1077,7 +1045,10 @@ def start_google_sign_in(e):
                     spacing=10,
                 ),
                 actions=[
-                    ft.TextButton("Отмена", on_click=lambda e: page.pop_dialog()),
+                    ft.TextButton(
+                        "Отмена",
+                        on_click=lambda e: page.pop_dialog(),
+                    ),
                     ft.TextButton("Создать", on_click=save),
                 ],
             )
@@ -1338,8 +1309,11 @@ def start_google_sign_in(e):
 
     def activate_plus(e):
         state["vibe_plus"] = not state["vibe_plus"]
-        notify("Демонстрационный Vibe+ включён" if state["vibe_plus"]
-               else "Vibe+ выключен")
+        notify(
+            "Демонстрационный Vibe+ включён"
+            if state["vibe_plus"]
+            else "Vibe+ выключен"
+        )
         render()
 
     def folders_screen():
@@ -1364,16 +1338,21 @@ def start_google_sign_in(e):
                     title=txt("Новая папка"),
                     content=name,
                     actions=[
-                        ft.TextButton("Отмена",
-                                      on_click=lambda e: page.pop_dialog()),
+                        ft.TextButton(
+                            "Отмена",
+                            on_click=lambda e: page.pop_dialog(),
+                        ),
                         ft.TextButton("Создать", on_click=save),
                     ],
                 )
             )
 
         controls = [
-            button("Создать папку", create_folder,
-                   ft.Icons.CREATE_NEW_FOLDER)
+            button(
+                "Создать папку",
+                create_folder,
+                ft.Icons.CREATE_NEW_FOLDER,
+            )
         ]
 
         for folder in state["folders"]:
@@ -1390,11 +1369,18 @@ def start_google_sign_in(e):
 
         if not state["folders"]:
             controls.append(
-                empty(ft.Icons.FOLDER_OUTLINED, "Папок пока нет",
-                      "Создай папку для переписок.")
+                empty(
+                    ft.Icons.FOLDER_OUTLINED,
+                    "Папок пока нет",
+                    "Создай папку для переписок.",
+                )
             )
 
-        return subpage("Папки чатов", "Организация переписок", controls)
+        return subpage(
+            "Папки чатов",
+            "Организация переписок",
+            controls,
+        )
 
     def chat_settings_screen():
         font = ft.Dropdown(
@@ -1438,10 +1424,16 @@ def start_google_sign_in(e):
                         spacing=12,
                     )
                 ),
-                setting_switch("Автозагрузка медиа",
-                               "Автоматическая загрузка", "auto_download"),
-                setting_switch("Отчёты о прочтении",
-                               "Показывать прочтение", "read_receipts"),
+                setting_switch(
+                    "Автозагрузка медиа",
+                    "Автоматическая загрузка",
+                    "auto_download",
+                ),
+                setting_switch(
+                    "Отчёты о прочтении",
+                    "Показывать прочтение",
+                    "read_receipts",
+                ),
             ],
         )
 
@@ -1512,8 +1504,11 @@ def start_google_sign_in(e):
             "Оформление",
             "Настрой внешний вид",
             [
-                button("Сменить тему", change_theme,
-                       ft.Icons.PALETTE_OUTLINED),
+                button(
+                    "Сменить тему",
+                    change_theme,
+                    ft.Icons.PALETTE_OUTLINED,
+                ),
             ],
         )
 
@@ -1700,8 +1695,10 @@ def start_google_sign_in(e):
                     ft.Row(
                         [
                             ft.Container(
-                                content=txt("V", 21, "white",
-                                            ft.FontWeight.BOLD),
+                                content=txt(
+                                    "V", 21, "white",
+                                    ft.FontWeight.BOLD,
+                                ),
                                 width=39,
                                 height=39,
                                 alignment=ft.Alignment.CENTER,
